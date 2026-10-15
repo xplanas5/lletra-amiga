@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.docx binary
+*.png binary
+*.jpg binary
+*.bat text eol=crlf
+*.jar binary

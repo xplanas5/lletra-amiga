@@ -1,0 +1,30 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+
+# Fitxers temporals d'Office (document obert)
+~$*
+
+# Dependències i builds (fases futures)
+node_modules/
+dist/
+.vercel/
+.netlify/
+
+# Secrets i configuració local (claus de Supabase, Stripe, etc.)
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
+
+# Configuració local amb claus de prova
+js/config.local.js
+
+# Documents interns (pla de negoci): no es publiquen
+Pla_monetitzacio_*.docx

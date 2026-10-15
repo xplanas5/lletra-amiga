@@ -1,0 +1,127 @@
+/* Adaptació a mòbil — només s'inclou a l'APK (no a la web).
+   Es carrega després de css/styles.css i en sobreescriu la maquetació. */
+
+:root{ --nav-h:64px; --gutter:12px; }
+
+html{ -webkit-text-size-adjust:100%; }
+body{ margin:0; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none; }
+
+.app{ max-width:none; padding:0 var(--gutter) calc(var(--nav-h) + 24px); }
+
+/* ---------- Barra superior compacta i fixa ---------- */
+.topbar{
+  position:sticky; top:0; z-index:40; background:var(--bg);
+  margin:0 calc(-1 * var(--gutter)) 14px; padding:10px var(--gutter);
+  flex-wrap:nowrap; gap:10px;
+}
+.brand{ min-width:0; gap:10px; }
+.brand-mark{ width:36px; height:36px; border-radius:10px; font-size:16px; }
+.brand-name{ font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.brand-tag{ display:none; }
+.header-actions{ gap:6px; flex:none; }
+.icon-btn{ height:40px; padding:0 12px; font-size:14px; }
+.icon-btn.icon-only{ width:40px; padding:0; justify-content:center; font-size:17px; }
+#currentProfileName{ max-width:8ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* ---------- Navegació inferior ---------- */
+.tabs.bottom-nav{
+  position:fixed; left:0; right:0; bottom:0; z-index:45; height:var(--nav-h);
+  border-radius:0; padding:6px; gap:2px; flex-wrap:nowrap; overflow-x:auto;
+  background:var(--surface); border-top:1px solid var(--border);
+  box-shadow:0 -4px 16px rgba(0,0,0,.06);
+  scrollbar-width:none; scroll-behavior:smooth;
+}
+.tabs.bottom-nav::-webkit-scrollbar{ display:none; }
+.bottom-nav .tab-btn{
+  flex:1 0 76px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  padding:4px 6px; border-radius:14px; font-size:11px; line-height:1.1;
+}
+.bottom-nav .tab-icon{ font-size:20px; line-height:1; }
+.bottom-nav .tab-btn[aria-selected="true"]{ background:var(--accent-soft); color:var(--accent-strong); }
+html.kb-open .bottom-nav{ display:none; }
+html.kb-open .app{ padding-bottom:24px; }
+
+/* En pantalles tàctils, l'estat :hover queda "enganxat" després de tocar. */
+@media (hover:none){
+  .tab-btn:hover:not([aria-selected="true"]){ background:transparent; color:var(--ink-secondary); }
+  .icon-btn:hover, .ghost-btn:hover, .choice-btn:hover:not(:disabled), .letter-cell:hover:not(:disabled),
+  .activity-card:hover:not(:disabled){ border-color:var(--border); }
+  .play-btn:hover{ background:var(--accent); }
+}
+
+/* ---------- Targetes i seccions ---------- */
+.card{ padding:16px; border-radius:18px; }
+.stack{ gap:14px; }
+.section-title{ font-size:16px; }
+.section-hint{ font-size:14px; }
+
+/* ---------- Controls més grans per al tacte ---------- */
+select.field, input.field, textarea.field{ font-size:16px; min-height:46px; padding:10px 12px; }
+textarea.field{ min-height:110px; }
+.ghost-btn, .play-btn{ min-height:46px; padding:10px 16px; font-size:15px; justify-content:center; }
+.subtab-btn{ min-height:42px; font-size:14px; }
+.choice-btn{ min-height:50px; font-size:18px; flex:1 1 auto; }
+.activity-back{ min-height:44px; text-align:left; font-size:15px; }
+.link-btn{ min-height:40px; }
+.reader-toolbar > .field{ flex:1 1 180px; min-width:0; }
+
+/* Lector: botons en graella, el de lectura a tota l'amplada */
+#panel-reader > .card > .reader-toolbar, #lector-detail > .reader-toolbar{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+#sampleSelect, #loadSample, #playBtn, #ttsNote{ grid-column:1 / -1; }
+#playBtn{ order:-1; }
+#ttsNote:empty{ display:none; }
+
+.text-surface{ padding:16px; min-height:140px; }
+.reading-text, .adaptive-text{ max-width:none; }
+
+/* ---------- Activitats ---------- */
+.activity-grid{ grid-template-columns:1fr; gap:10px; }
+.activity-card{ min-height:0; padding:14px 16px; }
+.activity-card .name{ font-size:15.5px; }
+.activity-card .desc{ font-size:13.5px; }
+.soon-block{ padding-top:14px; }
+
+.letters-grid{ grid-template-columns:repeat(auto-fill, minmax(48px,1fr)); }
+.prompt-word{ font-size:30px; overflow-wrap:anywhere; }
+.feedback-banner{ font-size:15px; }
+
+/* ---------- Progrés ---------- */
+.tiles{ grid-template-columns:1fr 1fr; gap:10px; }
+.tile{ padding:12px; }
+.tile-value{ font-size:22px; }
+.level-grid{ grid-template-columns:1fr; }
+.bar-row{ grid-template-columns:88px 1fr 40px; gap:8px; }
+.week-chart{ gap:6px; }
+#progressRadar svg{ overflow:visible; max-width:240px !important; }
+.review-item .name{ min-width:0; flex-basis:100%; }
+
+/* ---------- Ajustos, perfils i compte: fulls inferiors ---------- */
+.drawer-backdrop{ align-items:flex-end; justify-content:stretch; padding:0; }
+.drawer-backdrop .drawer, #profileBackdrop .drawer{
+  width:100%; height:auto; max-height:88vh; border:none; border-radius:22px 22px 0 0;
+  padding:10px 18px 28px; gap:18px; overscroll-behavior:contain;
+}
+.drawer-backdrop .drawer::before{
+  content:""; align-self:center; flex:none; width:40px; height:4px; border-radius:2px; background:var(--border);
+}
+#profileBackdrop{ padding:0; align-items:flex-end; }
+.close-btn{ width:44px; height:44px; font-size:22px; }
+.segmented button{ min-height:42px; font-size:13.5px; }
+.swatch{ width:42px; height:42px; }
+.profile-row{ min-height:52px; }
+.profile-row .mini-btn{ min-width:40px; min-height:40px; }
+
+/* ---------- Informe de treball: pantalla completa ---------- */
+.drawer-backdrop.report-backdrop{ align-items:flex-start; padding:0; }
+.report-shell{ border-radius:0; border:none; min-height:100%; }
+.report-controls .field-group{ min-width:0; flex:1 1 100%; }
+.report-actions{ display:grid; grid-template-columns:1fr; gap:8px; }
+.r-table{ font-size:13px; }
+.r-table th, .r-table td{ padding:6px 5px; }
+.r-bar{ width:56px; }
+
+/* ---------- Ajustos: contingut ---------- */
+.content-group .reader-toolbar > *{ flex:1 1 100%; justify-content:center; }
+
+/* ---------- Activitat oberta (lògica compartida a js/app.js) ---------- */
+html.in-activity .app{ padding-bottom:24px; }

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editor de contingut · Lletra Amiga</title>
+  <meta name="description" content="Afegeix o substitueix els exemples de les activitats de Lletra Amiga i comparteix-los com a fitxer." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+<div class="app ed-app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">Ll</div>
+      <div>
+        <p class="brand-name">Editor de contingut</p>
+        <p class="brand-tag">Lletra Amiga · exemples de les activitats</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a class="icon-btn" id="backToApp" href="index.html">← Torna a l'app</a>
+    </div>
+  </header>
+
+  <section class="card stack">
+    <div>
+      <p class="section-title">El teu paquet de contingut</p>
+      <p class="section-hint">Afegeix exemples propis a qualsevol activitat (paraules, frases, textos i preguntes). Pots fer-los servir en aquest dispositiu o exportar-los com a fitxer per compartir-los amb altres dispositius o professionals.</p>
+    </div>
+    <div class="ed-meta">
+      <div class="field-group"><label class="field-label" for="packTitle">Nom del paquet</label><input class="field" id="packTitle" placeholder="P. ex. Vocabulari de 3r — tardor"></div>
+      <div class="field-group"><label class="field-label" for="packAuthor">Autoria</label><input class="field" id="packAuthor" placeholder="P. ex. Escola del Bosc"></div>
+    </div>
+    <div class="reader-toolbar ed-actions">
+      <button class="play-btn" id="saveBtn" type="button">💾 Desa en aquest dispositiu</button>
+      <button class="ghost-btn" id="exportBtn" type="button">⬇ Exporta el fitxer</button>
+      <button class="ghost-btn" id="importBtn" type="button">⬆ Importa un fitxer</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+      <button class="link-btn" id="clearBtn" type="button">Esborra els exemples propis</button>
+    </div>
+    <p class="field-note" id="ownTotal"></p>
+    <p class="field-note" id="saveState" aria-live="polite"></p>
+    <p class="ed-status" id="edStatus" role="status" aria-live="polite"></p>
+
+    <details class="ed-help">
+      <summary>Com ho comparteixo amb tots els dispositius?</summary>
+      <ol>
+        <li>Prem <b>Exporta el fitxer</b>: es baixa un <code>contingut.json</code>.</li>
+        <li>Publica'l en una adreça web accessible, per exemple dins del repositori de GitHub de l'app (a l'arrel, amb el nom <code>contingut.json</code>, el reben automàticament totes les còpies de la web i de l'app que se'n publiquin) o en qualsevol web que permeti l'accés des d'altres llocs (CORS), com GitHub Pages o un <i>gist</i> públic (adreça «raw»).</li>
+        <li>A cada dispositiu, ves a <b>Ajustos de lectura → Exemples i contingut</b>, enganxa l'adreça i prem <b>Desa i actualitza</b>. A partir d'aquí, cada vegada que s'obri l'app es baixaran les novetats.</li>
+      </ol>
+      <p class="field-note">També pots carregar aquí un paquet publicat per editar-lo:</p>
+      <div class="reader-toolbar">
+        <input class="field" id="loadUrl" type="url" inputmode="url" placeholder="https://…/contingut.json" spellcheck="false">
+        <button class="ghost-btn" id="loadUrlBtn" type="button">Carrega'l a l'editor</button>
+      </div>
+    </details>
+  </section>
+
+  <section class="card stack ed-bank">
+    <div class="field-group">
+      <label class="field-label" for="bankSelect">Banc d'exemples</label>
+      <select class="field" id="bankSelect"></select>
+    </div>
+    <div id="bankView" class="stack"></div>
+  </section>
+</div>
+
+<script src="js/banks.js"></script>
+<script src="js/content.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>

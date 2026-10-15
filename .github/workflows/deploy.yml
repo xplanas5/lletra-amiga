@@ -1,0 +1,59 @@
+# Publica Lletra Amiga a GitHub Pages.
+# Les claus de Supabase NO són al codi: es llegeixen dels Secrets del repositori
+# (Settings → Secrets and variables → Actions) i s'escriuen a js/config.js en publicar.
+name: Publica a GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepara la carpeta publicable
+        run: |
+          mkdir -p _site
+          cp index.html editor.html _site/
+          cp -r css js _site/
+          # Paquet de contingut compartit (opcional): el reben automàticament tots els dispositius.
+          [ -f contingut.json ] && cp contingut.json _site/ || true
+          rm -f _site/js/config.local.js
+
+      - name: Genera js/config.js a partir dels Secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GOOGLE_LOGIN: ${{ vars.GOOGLE_LOGIN }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::warning::Falten els Secrets SUPABASE_URL / SUPABASE_ANON_KEY: es publica en mode local."
+          fi
+          GOOGLE=false
+          [ "$GOOGLE_LOGIN" = "true" ] && GOOGLE=true
+          jq -n --arg url "$SUPABASE_URL" --arg key "$SUPABASE_ANON_KEY" --argjson google "$GOOGLE" \
+            '{supabaseUrl: $url, supabaseAnonKey: $key, googleLogin: $google}' \
+            | sed '1s/^/window.LLETRA_CONFIG = /; $s/$/;/' > _site/js/config.js
+          echo "Configuració generada (sense mostrar les claus)."
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

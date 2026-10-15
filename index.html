@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lletra Amiga</title>
+  <meta name="description" content="Eina d'entrenament lector i ortogràfic per a persones amb dislèxia: lectura adaptada, exercicis i seguiment de progrés." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<!-- ================= PORTADA ================= -->
+<div class="cover" id="cover" role="dialog" aria-labelledby="coverTitle" hidden>
+  <div class="cover-inner">
+    <div class="cover-head">
+      <div class="brand-mark" aria-hidden="true">Ll</div>
+      <h1 id="coverTitle">Lletra Amiga</h1>
+      <p class="cover-lead">Entrenament lector i ortogràfic pensat per a persones amb dislèxia. Tria per on vols començar:</p>
+    </div>
+
+    <div class="cover-grid">
+      <button class="cover-card" data-go="panel-reader"><span class="cover-icon" aria-hidden="true">📖</span><span class="name">Lectura</span><span class="desc">Lector adaptat amb veu, lectura guiada i fluïdesa.</span></button>
+      <button class="cover-card" data-go="panel-fonologia"><span class="cover-icon" aria-hidden="true">👂</span><span class="name">Fonologia</span><span class="desc">Escoltar, separar i canviar els sons de les paraules.</span></button>
+      <button class="cover-card" data-go="panel-exercises"><span class="cover-icon" aria-hidden="true">🔤</span><span class="name">Descodificació</span><span class="desc">Lletres que es confonen, síl·labes i rimes.</span></button>
+      <button class="cover-card" data-go="panel-dictation"><span class="cover-icon" aria-hidden="true">✏️</span><span class="name">Ortografia</span><span class="desc">Dictats, patrons i errors per detectar.</span></button>
+      <button class="cover-card" data-go="panel-vocabulari"><span class="cover-icon" aria-hidden="true">💬</span><span class="name">Vocabulari</span><span class="desc">Famílies, sinònims, prefixos i paraules noves.</span></button>
+      <button class="cover-card" data-go="panel-comprensio"><span class="cover-icon" aria-hidden="true">🧠</span><span class="name">Comprensió</span><span class="desc">Idea principal, inferències i resums.</span></button>
+      <button class="cover-card" data-go="panel-missions"><span class="cover-icon" aria-hidden="true">🎯</span><span class="name">Missions</span><span class="desc">Reptes de lectura i un escape room.</span></button>
+      <button class="cover-card" data-go="panel-progress"><span class="cover-icon" aria-hidden="true">📈</span><span class="name">Progrés</span><span class="desc">Nivell per àrees, repàs i informes de treball.</span></button>
+    </div>
+
+    <ul class="cover-tools">
+      <li><span aria-hidden="true">👤</span> <b>Perfils</b>: cada persona té el seu progrés.</li>
+      <li><span aria-hidden="true">⚙</span> <b>Ajustos</b>: lletra, espaiat, colors i veu.</li>
+      <li><span aria-hidden="true">📄</span> <b>Informes</b>: per imprimir, desar en PDF o en CSV.</li>
+      <li><span aria-hidden="true">✎</span> <b>Editor</b>: afegeix exemples propis a les activitats.</li>
+    </ul>
+
+    <div class="cover-actions">
+      <button class="play-btn" id="coverStart">Comença</button>
+      <label class="check-row"><input type="checkbox" id="coverSkip"> <span>No mostris la portada en obrir l'app</span></label>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <button class="brand-mark brand-home" id="openCover" title="Portada" aria-label="Mostra la portada">Ll</button>
+      <div>
+        <p class="brand-name">Lletra Amiga</p>
+        <p class="brand-tag">Entrenament lector i ortogràfic</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Categories d'activitats" id="mainTabs">
+      <button class="tab-btn" role="tab" aria-selected="true" data-target="panel-reader">Lectura</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-fonologia">Fonologia</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-exercises">Descodificació</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-dictation">Ortografia</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-vocabulari">Vocabulari</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-comprensio">Comprensió</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-missions">Missions</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-progress">Progrés</button>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" id="openProfiles" aria-haspopup="dialog">👤 <span id="currentProfileName">Perfil 1</span></button>
+      <button class="icon-btn" id="openSettings" aria-haspopup="dialog">⚙ Ajustos de lectura</button>
+      <button class="icon-btn" id="openAccount" aria-haspopup="dialog" hidden>☁ <span id="accountLabel">Inicia sessió</span></button>
+    </div>
+  </header>
+
+  <div class="content-banner" id="contentBanner" role="status" hidden>
+    <span>Hi ha exemples nous disponibles.</span>
+    <button class="ghost-btn" id="contentReload">Fes-los servir ara</button>
+  </div>
+
+  <!-- ================= READER ================= -->
+  <section class="panel stack" id="panel-reader" role="tabpanel">
+    <div class="card stack">
+      <div>
+        <p class="section-title">Lectura i fluïdesa</p>
+        <p class="section-hint">Tria una activitat per començar.</p>
+      </div>
+      <div class="activity-grid" id="grid-lectura"></div>
+      <div id="lector-detail" hidden class="stack">
+        <button class="activity-back" id="lector-back">‹ Totes les activitats de lectura</button>
+        <div>
+          <p class="section-title">Lector adaptat</p>
+          <p class="section-hint">Enganxa un text propi o tria'n un d'exemple. Ajusta la lletra, l'espaiat i el fons des d'«Ajustos de lectura».</p>
+        </div>
+        <div class="reader-toolbar">
+          <select class="field" id="sampleSelect">
+            <option value="">Tria un text d'exemple…</option>
+            <option value="0">La biblioteca del barri</option>
+            <option value="1">El dia de la fira</option>
+            <option value="2">Un cap de setmana a la muntanya</option>
+          </select>
+          <button class="ghost-btn" id="loadSample">Carrega'l al lector</button>
+        </div>
+        <textarea class="field" id="ownText" placeholder="…o enganxa aquí el teu propi text i prem «Actualitza el text»."></textarea>
+        <div class="reader-toolbar">
+          <button class="ghost-btn" id="updateText">Actualitza el text</button>
+          <button class="play-btn" id="playBtn">▶ Llegeix en veu alta</button>
+          <button class="ghost-btn" id="stopBtn">Atura</button>
+          <span class="section-hint" id="ttsNote"></span>
+        </div>
+        <div class="text-surface" id="readingSurface" data-tint="none">
+          <div class="reading-text adaptive-text" id="readingText"></div>
+        </div>
+      </div>
+      <div id="lectura-detail" hidden class="stack">
+        <button class="activity-back" id="lectura-back">‹ Totes les activitats de lectura</button>
+        <div id="lectura-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DESCODIFICACIÓ ================= -->
+  <section class="panel stack" id="panel-exercises" role="tabpanel" hidden>
+    <div class="card stack">
+      <div>
+        <p class="section-title">Descodificació</p>
+        <p class="section-hint">Activitats per treballar la lectura de paraules: reconeixement de lletres, síl·labes i estructura de la paraula.</p>
+      </div>
+      <div class="activity-grid" id="grid-descodificacio"></div>
+      <div id="descodificacio-detail" hidden class="stack">
+        <button class="activity-back" id="descodificacio-back">‹ Totes les activitats de descodificació</button>
+        <div id="descodificacio-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FONOLOGIA ================= -->
+  <section class="panel stack" id="panel-fonologia" role="tabpanel" hidden>
+    <div class="card stack">
+      <div>
+        <p class="section-title">Consciència fonològica</p>
+        <p class="section-hint">Activitats centrades en el reconeixement i la manipulació dels sons de la llengua.</p>
+      </div>
+      <div class="activity-grid" id="grid-fonologia"></div>
+      <div id="fonologia-detail" hidden class="stack">
+        <button class="activity-back" id="fonologia-back">‹ Totes les activitats de fonologia</button>
+        <div id="fonologia-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ORTOGRAFIA ================= -->
+  <section class="panel stack" id="panel-dictation" role="tabpanel" hidden>
+    <div class="card stack">
+      <div>
+        <p class="section-title">Ortografia i escriptura</p>
+        <p class="section-hint">Activitats de reconeixement i producció escrita per treballar l'ortografia.</p>
+      </div>
+      <div class="activity-grid" id="grid-ortografia"></div>
+      <div id="ortografia-detail" hidden class="stack">
+        <button class="activity-back" id="ortografia-back">‹ Totes les activitats d'ortografia</button>
+        <div id="ortografia-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VOCABULARI ================= -->
+  <section class="panel stack" id="panel-vocabulari" role="tabpanel" hidden>
+    <div class="card stack">
+      <div>
+        <p class="section-title">Vocabulari i morfologia</p>
+        <p class="section-hint">Activitats per ampliar el vocabulari i treballar l'estructura de les paraules.</p>
+      </div>
+      <div class="activity-grid" id="grid-vocabulari"></div>
+      <div id="vocabulari-detail" hidden class="stack">
+        <button class="activity-back" id="vocabulari-back">‹ Totes les activitats de vocabulari</button>
+        <div id="vocabulari-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COMPRENSIÓ ================= -->
+  <section class="panel stack" id="panel-comprensio" role="tabpanel" hidden>
+    <div class="card stack">
+      <div>
+        <p class="section-title">Comprensió lectora</p>
+        <p class="section-hint">Activitats per treballar la comprensió d'allò llegit, més enllà de la descodificació.</p>
+      </div>
+      <div class="activity-grid" id="grid-comprensio"></div>
+      <div id="comprensio-detail" hidden class="stack">
+        <button class="activity-back" id="comprensio-back">‹ Totes les activitats de comprensió</button>
+        <div id="comprensio-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MISSIONS ================= -->
+  <section class="panel stack" id="panel-missions" role="tabpanel" hidden>
+    <div class="card stack">
+      <div>
+        <p class="section-title">Missions i gamificació</p>
+        <p class="section-hint">Reptes que donen una finalitat concreta a la lectura, combinant altres activitats.</p>
+      </div>
+      <div class="activity-grid" id="grid-missions"></div>
+      <div id="missions-detail" hidden class="stack">
+        <button class="activity-back" id="missions-back">‹ Totes les activitats de missions</button>
+        <div id="missions-view" class="stack"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROGRESS ================= -->
+  <section class="panel stack" id="panel-progress" role="tabpanel" hidden>
+    <div class="card stack">
+      <div class="progress-head">
+        <p class="section-title">El teu progrés</p>
+        <button class="ghost-btn" id="openReport" aria-haspopup="dialog">📄 Informe de treball</button>
+      </div>
+      <div class="tiles" id="progressTiles"></div>
+      <div>
+        <p class="section-title" style="margin-bottom:2px;">Perfil de progrés</p>
+        <p class="section-hint" style="margin-bottom:6px;">Nivell (1-5) estimat automàticament a partir de la teva precisió recent a cada àrea.</p>
+        <div id="progressRadar"></div>
+        <div class="level-grid" id="domainLevels" style="margin-top:12px;"></div>
+      </div>
+      <div>
+        <p class="section-title" style="margin-bottom:10px;">Activitat dels últims 7 dies</p>
+        <div class="week-chart" id="weekChart"></div>
+      </div>
+      <div>
+        <p class="section-title" style="margin-bottom:6px;">Com t'ha anat llegir avui?</p>
+        <div id="selfEvalWidget"></div>
+      </div>
+      <div>
+        <p class="section-title" style="margin-bottom:2px;">Repàs espaiat i quadern d'errors</p>
+        <p class="section-hint" style="margin-bottom:10px;">Els exercicis que et costen més es tornen a proposar aquí al cap d'uns dies, perquè els repassis just a temps.</p>
+        <div id="reviewSection"></div>
+      </div>
+      <div>
+        <p class="section-title" style="margin-bottom:10px;">Precisió per exercici</p>
+        <div class="bar-rows" id="accuracyBars"></div>
+      </div>
+      <div class="reset-row">
+        <button class="link-btn" id="resetProgress">Esborra tot el progrés desat</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="drawer-backdrop" id="drawerBackdrop" hidden>
+  <div class="drawer" role="dialog" aria-label="Ajustos de lectura">
+    <div class="drawer-head">
+      <p class="section-title">Ajustos de lectura</p>
+      <button class="close-btn" id="closeSettings" aria-label="Tanca els ajustos">✕</button>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">Tema</p>
+      <div class="segmented" id="themeSeg">
+        <button data-value="light" aria-pressed="false">Clar</button>
+        <button data-value="system" aria-pressed="true">Sistema</button>
+        <button data-value="dark" aria-pressed="false">Fosc</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">Tipus de lletra</p>
+      <div class="segmented" id="fontSeg">
+        <button data-value="lexend" aria-pressed="true">Lexend</button>
+        <button data-value="atkinson" aria-pressed="false">Atkinson</button>
+      </div>
+      <p class="field-note">Totes dues estan dissenyades per facilitar la lectura i diferenciar bé lletres com b/d/p/q.</p>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">Mida del text</p>
+      <input type="range" id="sizeRange" min="16" max="30" value="20" step="1">
+      <div class="range-row"><span>Petit</span><span id="sizeValue">20px</span><span>Gran</span></div>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">Interlineat</p>
+      <input type="range" id="lineRange" min="1.3" max="2.2" value="1.8" step="0.1">
+      <div class="range-row"><span>Ajustat</span><span id="lineValue">1.8</span><span>Ampli</span></div>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">Espaiat entre lletres</p>
+      <input type="range" id="trackRange" min="0" max="0.15" value="0.02" step="0.01">
+      <div class="range-row"><span>Cap</span><span id="trackValue">0.02em</span><span>Molt</span></div>
+    </div>
+
+    <div class="field-group">
+      <div class="toggle-row">
+        <div>
+          <p class="field-label">Ressaltar l'inici de les paraules</p>
+          <p class="field-note">Marca en negreta el principi de cada paraula per guiar la lectura.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="bionicToggle">
+          <span class="track"><span class="knob"></span></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">To de fons del text</p>
+      <div class="swatch-row" id="tintRow">
+        <button class="swatch" data-tint="none" aria-pressed="true" style="background:var(--surface-2);" title="Cap"></button>
+        <button class="swatch" data-tint="cream" aria-pressed="false" style="background:#F3ECD2;" title="Crema"></button>
+        <button class="swatch" data-tint="blue" aria-pressed="false" style="background:#E2ECF4;" title="Blau"></button>
+        <button class="swatch" data-tint="green" aria-pressed="false" style="background:#E4EFE1;" title="Verd"></button>
+        <button class="swatch" data-tint="pink" aria-pressed="false" style="background:#F5E6EB;" title="Rosa"></button>
+        <button class="swatch" data-tint="grey" aria-pressed="false" style="background:#E7E7E4;" title="Gris"></button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <p class="field-label">Velocitat de la veu</p>
+      <input type="range" id="rateRange" min="0.6" max="1.2" value="0.9" step="0.05">
+      <div class="range-row"><span>Lenta</span><span id="rateValue">0.9×</span><span>Normal</span></div>
+    </div>
+
+    <div class="field-group content-group">
+      <p class="field-label">Exemples i contingut</p>
+      <p class="field-note" id="contentSummary"></p>
+      <label class="field-note" for="contentUrl">Adreça d'un paquet de contingut compartit (opcional). Cada vegada que s'obre l'app, se'n baixen les novetats.</label>
+      <input class="field" id="contentUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://…/contingut.json">
+      <div class="reader-toolbar">
+        <button class="ghost-btn" id="contentRefresh">Desa i actualitza</button>
+        <a class="ghost-btn" id="contentEditor" href="editor.html">✎ Editor de contingut</a>
+      </div>
+      <p class="field-note" id="contentStatus" role="status"></p>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-backdrop report-backdrop" id="reportBackdrop" hidden>
+  <div class="report-shell" role="dialog" aria-label="Informe de treball">
+    <div class="report-toolbar" id="reportToolbar"></div>
+    <article class="report-doc" id="reportDoc"></article>
+  </div>
+</div>
+
+<div class="drawer-backdrop" id="profileBackdrop" hidden>
+  <div class="drawer" role="dialog" aria-label="Gestiona perfils">
+    <div class="drawer-head">
+      <p class="section-title">Perfils</p>
+      <button class="close-btn" id="closeProfiles" aria-label="Tanca la gestió de perfils">✕</button>
+    </div>
+    <p class="section-hint">Cada perfil desa el seu propi progrés i ajustos de lectura en aquest dispositiu. Útil si diverses persones (per exemple, diferents alumnes) fan servir la mateixa app.</p>
+    <div class="stack" id="profileList"></div>
+    <div class="reader-toolbar">
+      <input class="field" id="newProfileName" placeholder="Nom del nou perfil…" style="flex:1;">
+      <button class="ghost-btn" id="addProfile">Afegeix perfil</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-backdrop" id="accountBackdrop" hidden>
+  <div class="drawer" role="dialog" aria-label="Compte">
+    <div class="drawer-head">
+      <p class="section-title">Compte</p>
+      <button class="close-btn" id="closeAccount" aria-label="Tanca el compte">✕</button>
+    </div>
+
+    <div class="stack" id="accountSignedOut">
+      <p class="section-hint">Inicia sessió per desar els perfils i el progrés al núvol i recuperar-los des de qualsevol dispositiu. El compte l'ha de crear una persona adulta (família o professional); els infants fan servir perfils dins del compte.</p>
+      <div class="field-group">
+        <label class="field-label" for="accountEmail">Correu electrònic</label>
+        <input class="field" id="accountEmail" type="email" autocomplete="email" placeholder="nom@exemple.cat">
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="accountAdult">
+        <span>Confirmo que soc una persona adulta i que accepto la política de privacitat.</span>
+      </label>
+      <button class="play-btn" id="accountSend">Envia'm l'enllaç d'accés</button>
+      <button class="ghost-btn" id="accountGoogle" hidden>Entra amb Google</button>
+      <p class="field-note">No cal contrasenya: rebràs un enllaç per correu per entrar.</p>
+    </div>
+
+    <div class="stack" id="accountSignedIn" hidden>
+      <p class="section-hint">Sessió iniciada com a <strong id="accountUserEmail"></strong>.</p>
+      <p class="field-note" id="accountSyncState" aria-live="polite"></p>
+      <div class="reader-toolbar">
+        <button class="ghost-btn" id="accountSyncNow">Sincronitza ara</button>
+        <button class="ghost-btn" id="accountSignOut">Tanca la sessió</button>
+      </div>
+      <p class="field-note">En tancar la sessió, els perfils s'esborren d'aquest dispositiu però continuen desats al compte.</p>
+    </div>
+
+    <p class="field-note" id="accountStatus" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/banks.js"></script>
+<script src="js/content.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

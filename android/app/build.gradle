@@ -1,0 +1,64 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'cat.lletraamiga.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'cat.lletraamiga.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // Els fitxers web es copien de l'arrel del projecte a cada compilació (una sola font).
+    sourceSets {
+        main.assets.srcDirs += "$buildDir/generated/webassets"
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.core:core:1.13.1'
+}
+
+def webRoot = rootProject.projectDir.parentFile
+
+tasks.register('copyWebAssets', Copy) {
+    into "$buildDir/generated/webassets/www"
+    filteringCharset = 'UTF-8'
+    from(webRoot) {
+        include 'index.html'
+        // Fitxers exclusius de l'APK: pont de veu (abans dels scripts de l'app),
+        // estils i script d'adaptació a mòbil (després dels de la web).
+        filter { String line ->
+            line.replace('<script src="js/config.js"></script>',
+                         '<script src="js/android-tts.js"></script>\n<script src="js/config.js"></script>')
+                .replace('<link rel="stylesheet" href="css/styles.css">',
+                         '<link rel="stylesheet" href="css/styles.css">\n  <link rel="stylesheet" href="css/android.css">')
+                .replace('<script src="js/app.js"></script>',
+                         '<script src="js/app.js"></script>\n<script src="js/android-mobile.js"></script>')
+        }
+    }
+    from(webRoot) {
+        // L'editor de contingut i, si n'hi ha, el paquet de contingut publicat (contingut.json).
+        include 'css/**', 'js/**', 'editor.html', 'contingut.json'
+        exclude 'js/config.local.js'
+    }
+    from('src/main/assets-extra')
+}
+preBuild.dependsOn 'copyWebAssets'
