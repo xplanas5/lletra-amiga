@@ -832,7 +832,8 @@ html.in-activity .home-back{display:none;}
 }
 .home-section:hover{transform:translateY(-2px); box-shadow:0 6px 0 var(--line);}
 .home-section:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
-.hs-icon{font-size:40px; line-height:1; margin-bottom:4px;}
+.hs-icon{width:104px; height:104px; object-fit:contain; margin:-6px 0 0; transition:transform .15s ease-out;}
+.home-section:hover .hs-icon{transform:scale(1.06) rotate(-3deg);}
 .home-section .name{font-family:var(--font-fun); font-size:17px; font-weight:600;}
 .home-section .desc{font-size:13px; color:var(--ink-secondary); line-height:1.35;}
 .hs-meter{margin-top:4px; font-size:12px; font-weight:700; color:var(--ink-secondary); background:var(--surface); border-radius:999px; padding:2px 10px;}
@@ -849,6 +850,7 @@ html.in-activity .home-back{display:none;}
   .home-action{min-height:0; padding:14px;}
   .home-sections{grid-template-columns:1fr 1fr;}
   .home-mascot{width:76px; height:76px;}
+  .hs-icon{width:84px; height:84px;}
   .home-hello .speech{font-size:17px;}
 }
 
@@ -891,7 +893,8 @@ html.in-activity .home-back{display:none;}
   .panel:not([hidden]), .activity-grid:not([hidden]), .panel [id$="-detail"]:not([hidden]), .drawer-backdrop:not([hidden]) .drawer,
   .cover:not([hidden]) .cover-inner > *, .cover-mascot, .home-mascot, .feedback-banner, .ha-count, .review-item.due .monster{animation:none;}
   .game-burst{display:none;}
-  .home-action, .home-section, .home-back{transition:none;}
+  .home-action, .home-section, .home-back, .hs-icon{transition:none;}
+  .home-section:hover .hs-icon{transform:none;}
 }
 
 /* Capçalera en pantalles petites (web): botons només amb icona */

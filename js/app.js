@@ -604,7 +604,8 @@
     container.querySelector("#letterTarget").textContent = target;
     container.querySelector("#letterFeedback").innerHTML = "";
     var size = 36, targetCount = 7 + Math.floor(Math.random() * 3);
-    var pool = LETTERS.concat(NEUTRAL_LETTERS);
+    // El farciment no pot incloure la lletra que es busca: si no, n'hi hauria més de les comptades.
+    var pool = LETTERS.concat(NEUTRAL_LETTERS).filter(function(l){ return l !== target; });
     var cells = [];
     for (var i = 0; i < targetCount; i++) cells.push(target);
     while (cells.length < size){
@@ -612,7 +613,7 @@
       cells.push(c);
     }
     cells.sort(function(){ return Math.random() - 0.5; });
-    letterState.total = targetCount;
+    letterState.total = cells.filter(function(ch){ return ch === target; }).length;
     var grid = container.querySelector("#lettersGrid");
     grid.innerHTML = "";
     cells.forEach(function(ch){
@@ -715,7 +716,7 @@
       var og = RHYME_GROUPS[Math.floor(Math.random() * RHYME_GROUPS.length)];
       if (og === group) continue;
       var w = og[Math.floor(Math.random() * og.length)];
-      if (distractors.indexOf(w) === -1) distractors.push(w);
+      if (distractors.indexOf(w) === -1 && w.slice(-3) !== target.slice(-3)) distractors.push(w);
     }
     var opts = [correct].concat(distractors).sort(function(){ return Math.random() - 0.5; });
     container.querySelector("#rhymePrompt").innerHTML = 'Quina paraula rima amb «' + target + '»?';
@@ -773,7 +774,7 @@
   function renderConstrueixLaParaula(container){
     var item = pickRandom(PHONEME_WORDS, function(it){ return it === lastConstrueix; });
     lastConstrueix = item;
-    var pool = item.phonemes.slice().sort(function(){ return Math.random() - 0.5; });
+    var pool = shuffleUnsolved(item.phonemes);
     var picked = [];
     container.innerHTML =
       '<p class="section-hint">Fes clic als fragments en l\'ordre correcte per formar la paraula.</p>' +
@@ -800,10 +801,15 @@
     }
     renderPool(); renderAssembly();
     container.querySelector("#buildReset").addEventListener("click", function(){ picked = []; renderAssembly(); renderPool(); });
+    var recorded = false;
     container.querySelector("#buildCheck").addEventListener("click", function(){
+      if (picked.length < pool.length){
+        container.querySelector("#buildFeedback").innerHTML = '<div class="feedback-banner bad">Encara falten peces: col·loca-les totes i després comprova.</div>';
+        return;
+      }
       var assembled = picked.map(function(idx){ return pool[idx]; }).join("");
       var ok = assembled === item.phonemes.join("");
-      recordActivity("construeix", ok);
+      if (!recorded){ recorded = true; recordActivity("construeix", ok); }
       container.querySelector("#buildFeedback").innerHTML =
         '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Molt bé! Has format «" + item.word + "». " : "Encara no hi és. La paraula és «" + item.word + "». ") +
         '<button class="ghost-btn" id="buildSpeak" style="margin-left:8px;">🔊 Llegeix-la</button></div>';
@@ -817,7 +823,7 @@
   function renderOrdenaSillabes(container){
     var item = pickRandom(ORDENA_SYLLABLE_WORDS, function(it){ return it === lastOrdenaWord; });
     lastOrdenaWord = item;
-    var pool = item.syll.slice().sort(function(){ return Math.random() - 0.5; });
+    var pool = shuffleUnsolved(item.syll);
     var picked = [];
     container.innerHTML =
       '<p class="section-hint">Fes clic a les síl·labes en l\'ordre correcte per formar la paraula.</p>' +
@@ -844,10 +850,15 @@
     }
     renderPool(); renderAssembly();
     container.querySelector("#syllReset").addEventListener("click", function(){ picked = []; renderAssembly(); renderPool(); });
+    var recorded = false;
     container.querySelector("#syllCheck").addEventListener("click", function(){
+      if (picked.length < pool.length){
+        container.querySelector("#syllFeedback").innerHTML = '<div class="feedback-banner bad">Encara falten peces: col·loca-les totes i després comprova.</div>';
+        return;
+      }
       var assembled = picked.map(function(idx){ return pool[idx]; }).join("");
       var ok = assembled === item.syll.join("");
-      recordActivity("ordenaSillabes", ok);
+      if (!recorded){ recorded = true; recordActivity("ordenaSillabes", ok); }
       container.querySelector("#syllFeedback").innerHTML =
         '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Molt bé! Has format «" + item.word + "»." : "Encara no hi és. La paraula és «" + item.word + "».") + "</div>";
     });
@@ -902,7 +913,38 @@
   document.getElementById("descodificacio-back").addEventListener("click", showDescodificacioGrid);
 
   /* ---------------- Ortografia: helpers compartits ---------------- */
-  function normalizeWord(w){ return w.toLowerCase().replace(/[.,;:!¿?"']/g, ""); }
+  function normalizeWord(w){ return w.toLowerCase().replace(/[.,;:!¡¿?"'’«»“”…—–()]/g, ""); }
+  /* Compara paraula a paraula alineant les dues frases (si se'n salta una, la resta no compta com a error). */
+  function compareWords(original, typed){
+    var a = original.map(normalizeWord), b = typed.map(normalizeWord);
+    var n = a.length, m = b.length, L = [], i, j;
+    for (i = n; i >= 0; i--){
+      L[i] = [];
+      for (j = m; j >= 0; j--){
+        L[i][j] = (i === n || j === m) ? 0 : a[i] === b[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+      }
+    }
+    var marks = [], mistakes = [], matches = 0;
+    i = 0; j = 0;
+    while (i < n){
+      if (j < m && a[i] === b[j]){ marks.push(true); matches++; i++; j++; }
+      else if (j < m && L[i + 1][j + 1] === L[i][j]){ marks.push(false); mistakes.push({ typed: typed[j], correct: original[i] }); i++; j++; }
+      else if (j >= m || L[i + 1][j] >= L[i][j + 1]){ marks.push(false); mistakes.push({ typed: "—", correct: original[i] }); i++; }
+      else j++;
+    }
+    var html = original.map(function(w, k){ return '<span class="' + (marks[k] ? "match" : "miss") + '">' + w + "</span>"; }).join(" ");
+    return { html: html, mistakes: mistakes, accuracy: Math.round((matches / Math.max(n, m, 1)) * 100) };
+  }
+  /* Barreja els fragments evitant que quedin ja en l'ordre correcte. */
+  function shuffleUnsolved(arr){
+    var out = arr.slice();
+    for (var t = 0; t < 10; t++){
+      out.sort(function(){ return Math.random() - 0.5; });
+      if (out.join("|") !== arr.join("|")) break;
+    }
+    return out;
+  }
+  function emptyWarning(el){ el.innerHTML = '<div class="feedback-banner bad">Primer escriu la resposta i després prem «Comprova».</div>'; }
   /* Tria un element. Si la llista és un banc d'exemples, es treu de la baralla del perfil
      (sense repeticions fins acabar-la); si no, es tria a l'atzar com sempre. */
   var bankRegistry = null;
@@ -988,25 +1030,20 @@
       '<textarea class="field" id="oiInput" placeholder="Escriu aquí el que has escoltat…"></textarea>' +
       '<div class="reader-toolbar"><button class="ghost-btn" id="oiCheck">Comprova</button><button class="ghost-btn" id="oiNew">Nova frase</button></div>' +
       '<div id="oiResult"></div>';
-    var active = pickRandom(SENTENCES);
+    var active = pickRandom(SENTENCES), recorded = false;
     container.querySelector("#oiPlay").addEventListener("click", function(){ speak(active, {}); });
     container.querySelector("#oiNew").addEventListener("click", function(){
       active = pickRandom(SENTENCES, function(s){ return s === active; });
+      recorded = false;
       container.querySelector("#oiInput").value = "";
       container.querySelector("#oiResult").innerHTML = "";
     });
     container.querySelector("#oiCheck").addEventListener("click", function(){
       var typed = container.querySelector("#oiInput").value.trim();
-      var originalWords = active.split(/\s+/);
-      var typedWords = typed.split(/\s+/).filter(Boolean);
-      var matches = 0, mistakes = [];
-      var html = originalWords.map(function(w, i){
-        var ok = typedWords[i] && normalizeWord(typedWords[i]) === normalizeWord(w);
-        if (ok) matches++; else mistakes.push({ typed: typedWords[i] || "—", correct: w });
-        return '<span class="' + (ok ? "match" : "miss") + '">' + w + "</span>";
-      }).join(" ");
-      var accuracy = Math.round((matches / originalWords.length) * 100);
-      recordActivity("dictation", accuracy === 100);
+      if (!typed){ emptyWarning(container.querySelector("#oiResult")); return; }
+      var cmp = compareWords(active.split(/\s+/), typed.split(/\s+/).filter(Boolean));
+      var html = cmp.html, mistakes = cmp.mistakes, accuracy = cmp.accuracy;
+      if (!recorded){ recorded = true; recordActivity("dictation", accuracy === 100); }
       var detail = mistakes.length ? '<ul style="margin:8px 0 0; padding-left:18px; font-size:13px; color:var(--ink-secondary);">' +
         mistakes.map(function(m){ return "<li>Has escrit «" + m.typed + "», la paraula correcta és «" + m.correct + "».</li>"; }).join("") + "</ul>" : "";
       container.querySelector("#oiResult").innerHTML =
@@ -1033,10 +1070,12 @@
         '<div class="reader-toolbar"><button class="ghost-btn" id="dpCheck">Comprova</button></div>' +
         '<div id="dpResult"></div>';
       container.querySelector("#dpPlay").addEventListener("click", function(){ speak(word, {}); });
+      var recorded = false;
       container.querySelector("#dpCheck").addEventListener("click", function(){
         var typed = container.querySelector("#dpInput").value.trim();
+        if (!typed){ emptyWarning(container.querySelector("#dpResult")); return; }
         var ok = typed.toLowerCase() === word.toLowerCase();
-        recordActivity("dictatPreparat", ok);
+        if (!recorded){ recorded = true; recordActivity("dictatPreparat", ok); }
         container.querySelector("#dpResult").innerHTML =
           '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Ben escrit!" : "Gairebé — la forma correcta és «" + word + "».") + '</div>' +
           '<div class="reader-toolbar" style="margin-top:10px;"><button class="ghost-btn" id="dpNext">Continua</button></div>';
@@ -1053,18 +1092,13 @@
         '<div class="reader-toolbar"><button class="ghost-btn" id="dpCheckSentence">Comprova</button><button class="ghost-btn" id="dpRestart">Nova ronda</button></div>' +
         '<div id="dpSentenceResult"></div>';
       container.querySelector("#dpPlaySentence").addEventListener("click", function(){ speak(st.set.sentence, {}); });
+      var recordedSentence = false;
       container.querySelector("#dpCheckSentence").addEventListener("click", function(){
         var typed = container.querySelector("#dpSentenceInput").value.trim();
-        var originalWords = st.set.sentence.split(/\s+/);
-        var typedWords = typed.split(/\s+/).filter(Boolean);
-        var matches = 0;
-        var html = originalWords.map(function(w, i){
-          var ok = typedWords[i] && normalizeWord(typedWords[i]) === normalizeWord(w);
-          if (ok) matches++;
-          return '<span class="' + (ok ? "match" : "miss") + '">' + w + "</span>";
-        }).join(" ");
-        var accuracy = Math.round((matches / originalWords.length) * 100);
-        recordActivity("dictatPreparat", accuracy === 100);
+        if (!typed){ emptyWarning(container.querySelector("#dpSentenceResult")); return; }
+        var cmp = compareWords(st.set.sentence.split(/\s+/), typed.split(/\s+/).filter(Boolean));
+        var html = cmp.html, accuracy = cmp.accuracy;
+        if (!recordedSentence){ recordedSentence = true; recordActivity("dictatPreparat", accuracy === 100); }
         container.querySelector("#dpSentenceResult").innerHTML =
           '<div class="feedback-banner ' + (accuracy === 100 ? "ok" : "bad") + '">Precisió: ' + accuracy + "%</div>" +
           '<div class="diff-line" style="margin-top:10px;">' + html + "</div>";
@@ -1096,10 +1130,12 @@
         container.querySelector("#memInputArea").hidden = false;
       }, 3000);
     });
+    var recorded = false;
     container.querySelector("#memCheck").addEventListener("click", function(){
       var typed = container.querySelector("#memInput").value.trim();
+      if (!typed){ emptyWarning(container.querySelector("#memResult")); return; }
       var ok = typed.toLowerCase() === word.toLowerCase();
-      recordActivity("memoria", ok);
+      if (!recorded){ recorded = true; recordActivity("memoria", ok); }
       container.querySelector("#memResult").innerHTML =
         '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Memòria perfecta!" : "Gairebé, mira la comparació:") + '</div>' +
         '<div class="diff-line" style="margin-top:10px;">' + letterDiffHTML(typed, word) + "</div>";
@@ -1110,7 +1146,9 @@
   /* ---- Caça de patrons ---- */
   function renderCacaDePatrons(container){
     var pattern = pickRandom(SPELLING_PATTERNS);
-    var examples = pattern.words.slice(0, 4).map(function(w){ return w.correct; });
+    // Quatre exemples i una cinquena paraula reservada per al segon pas (no s'ha vist abans).
+    var patternWords = pattern.words.map(function(w){ return w.correct; }).sort(function(){ return Math.random() - 0.5; });
+    var examples = patternWords.slice(0, 4);
     var otherLabels = SPELLING_PATTERNS.filter(function(p){ return p.id !== pattern.id; }).map(function(p){ return p.label; });
     otherLabels.sort(function(){ return Math.random() - 0.5; });
     var options = [pattern.label].concat(otherLabels.slice(0, 3)).sort(function(){ return Math.random() - 0.5; });
@@ -1142,9 +1180,10 @@
     });
 
     function showPatternStep2(){
-      var newFromPattern = pattern.words[4] ? pattern.words[4].correct : pattern.words[0].correct;
-      var otherPattern = pickRandom(SPELLING_PATTERNS.filter(function(p){ return p.id !== pattern.id; }));
-      var newFromOther = otherPattern.words[0].correct;
+      var newFromPattern = patternWords[4] || patternWords[0];
+      var others = SPELLING_PATTERNS.filter(function(p){ return p.id !== pattern.id; });
+      var otherPattern = others[Math.floor(Math.random() * others.length)];
+      var newFromOther = otherPattern.words[Math.floor(Math.random() * otherPattern.words.length)].correct;
       var choices = [newFromPattern, newFromOther].sort(function(){ return Math.random() - 0.5; });
       var step2 = container.querySelector("#patternStep2");
       step2.innerHTML =
@@ -1201,13 +1240,14 @@
       });
     }
     item.sentence.split(/\s+/).forEach(function(tok){
-      var clean = tok.replace(/[.,;:!¿?]/g, "");
+      var clean = tok.replace(/[.,;:!¡¿?"«»“”…()]/g, "").toLowerCase().replace(/’/g, "'");
+      var wrong = item.wrong.toLowerCase();
       var span = document.createElement("span");
       span.textContent = tok;
       span.style.cursor = "pointer";
       span.addEventListener("click", function(){
         if (span.dataset.done) return;
-        if (clean === item.wrong || clean.split("'").pop() === item.wrong){
+        if (clean === wrong || clean.split("'").pop() === wrong){
           span.classList.add("match");
           wordsEl.querySelectorAll("span").forEach(function(s){ s.dataset.done = "1"; s.style.cursor = "default"; });
           showSpellingChoice();
@@ -1367,7 +1407,7 @@
   function renderCanviaUnSo(container){
     var item = pickRandom(SOUND_CHANGE_ITEMS, function(it){ return it === lastChangeItem; });
     lastChangeItem = item;
-    var otherResults = SOUND_CHANGE_ITEMS.filter(function(it){ return it !== item; }).map(function(it){ return it.result; });
+    var otherResults = SOUND_CHANGE_ITEMS.map(function(it){ return it.result; }).filter(function(r){ return r !== item.result && r !== item.word; });
     var distractor = otherResults[Math.floor(Math.random() * otherResults.length)];
     var opts = [item.result, distractor].sort(function(){ return Math.random() - 0.5; });
     container.innerHTML =
@@ -1414,6 +1454,7 @@
       grid.appendChild(btn);
     });
     container.querySelector("#detectCheck").addEventListener("click", function(){
+      container.querySelector("#detectCheck").disabled = true;
       var buttons = grid.querySelectorAll("button");
       var allOk = true;
       buttons.forEach(function(btn, i){
@@ -1459,6 +1500,8 @@
         var ok = w === item.correct;
         if (!ok) btn.classList.add("incorrect");
         recordActivity("escoltaTria", ok);
+        container.querySelector("#listenFeedback").innerHTML =
+          '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Molt bé, s'escriu «" + item.correct + "»!" : "S'escriu «" + item.correct + "».") + '</div>';
       });
       row.appendChild(btn);
     });
@@ -1541,7 +1584,7 @@
     lastBingoSet = set;
     var shuffled = set.words.slice().sort(function(){ return Math.random() - 0.5; });
     container.innerHTML =
-      '<p class="section-hint">Selecciona totes les paraules que comencen per la síl·laba «' + set.syllable + '» i després comprova.</p>' +
+      '<p class="section-hint">Selecciona totes les paraules que comencen per «' + set.syllable + '» i després comprova.</p>' +
       '<div class="letters-grid" id="bingoGrid" style="grid-template-columns:repeat(auto-fill,minmax(96px,1fr));"></div>' +
       '<div class="reader-toolbar"><button class="ghost-btn" id="bingoCheck">Comprova</button><button class="ghost-btn" id="bingoNext">Nova carta</button></div>' +
       '<div id="bingoFeedback"></div>';
@@ -1555,6 +1598,7 @@
       grid.appendChild(btn);
     });
     container.querySelector("#bingoCheck").addEventListener("click", function(){
+      container.querySelector("#bingoCheck").disabled = true;
       var buttons = grid.querySelectorAll("button");
       var allOk = true;
       buttons.forEach(function(btn, i){
@@ -1647,7 +1691,7 @@
   function renderPrefixosSufixos(container){
     var item = pickRandom(PREFIX_SUFFIX_ITEMS, function(it){ return it === lastPrefixSufix; });
     lastPrefixSufix = item;
-    var others = PREFIX_SUFFIX_ITEMS.filter(function(it){ return it !== item; }).map(function(it){ return it.correct; });
+    var others = PREFIX_SUFFIX_ITEMS.map(function(it){ return it.correct; }).filter(function(w, i, arr){ return w !== item.correct && arr.indexOf(w) === i; });
     others.sort(function(){ return Math.random() - 0.5; });
     var opts = [item.correct].concat(others.slice(0, 3)).sort(function(){ return Math.random() - 0.5; });
     container.innerHTML =
@@ -1803,10 +1847,12 @@
       '<div class="reader-toolbar"><button class="ghost-btn" id="pfCheck">Comprova</button><button class="ghost-btn" id="pfNext">Nova paraula</button></div>' +
       '<div id="pfResult"></div>';
     container.querySelector("#pfSpeak").addEventListener("click", function(){ speak(item.word, {}); });
+    var recorded = false;
     container.querySelector("#pfCheck").addEventListener("click", function(){
       var typed = container.querySelector("#pfInput").value.trim();
-      var ok = typed.length > 0 && normalizeWord(typed).indexOf(normalizeWord(item.word)) !== -1;
-      recordActivity("paraulaFrase", ok);
+      if (!typed){ emptyWarning(container.querySelector("#pfResult")); return; }
+      var ok = normalizeWord(typed).indexOf(normalizeWord(item.word)) !== -1;
+      if (!recorded){ recorded = true; recordActivity("paraulaFrase", ok); }
       container.querySelector("#pfResult").innerHTML =
         '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Molt bé, has fet servir la paraula correctament!" : "Assegura't d'incloure la paraula «" + item.word + "» a la frase.") + '</div>' +
         '<p class="section-hint" style="margin-top:8px;">Exemple: «' + item.example + '»</p>';
@@ -1948,7 +1994,7 @@
   function renderOrdenaHistoria(container){
     var item = pickRandom(STORY_ORDER_ITEMS, function(it){ return it === lastStoryOrder; });
     lastStoryOrder = item;
-    var pool = item.fragments.map(function(f, i){ return { text: f, idx: i }; }).sort(function(){ return Math.random() - 0.5; });
+    var pool = shuffleUnsolved(item.fragments).map(function(f){ return { text: f, idx: item.fragments.indexOf(f) }; });
     var picked = [];
     container.innerHTML =
       '<p class="section-hint">Fes clic als fragments en l\'ordre correcte perquè la història tingui sentit.</p>' +
@@ -1977,9 +2023,14 @@
     }
     renderPool(); renderAssembly();
     container.querySelector("#ohReset").addEventListener("click", function(){ picked = []; renderAssembly(); renderPool(); });
+    var recorded = false;
     container.querySelector("#ohCheck").addEventListener("click", function(){
-      var ok = picked.length === item.fragments.length && picked.every(function(frag, i){ return frag.idx === i; });
-      recordActivity("ordenaHistoria", ok);
+      if (picked.length < item.fragments.length){
+        container.querySelector("#ohFeedback").innerHTML = '<div class="feedback-banner bad">Encara falten fragments: col·loca\'ls tots i després comprova.</div>';
+        return;
+      }
+      var ok = picked.every(function(frag, i){ return frag.idx === i; });
+      if (!recorded){ recorded = true; recordActivity("ordenaHistoria", ok); }
       container.querySelector("#ohFeedback").innerHTML =
         '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Molt bé, l'ordre és correcte!" : "Encara no és l'ordre correcte. Torna-ho a provar o reinicia.") + '</div>';
     });
@@ -2104,6 +2155,7 @@
       wrap.appendChild(btn);
     });
     container.querySelector("#srCheck").addEventListener("click", function(){
+      container.querySelector("#srCheck").disabled = true;
       var ok = item.sentences.every(function(s, i){ return !!selected[i] === !!s.essential; });
       recordActivity("construeixResum", ok);
       wrap.querySelectorAll("button").forEach(function(b, idx){
@@ -2133,10 +2185,12 @@
       '<div class="reader-toolbar"><button class="ghost-btn" id="orCheck">Comprova</button><button class="ghost-btn" id="orNext">Nou text</button></div>' +
       '<div id="orResult"></div>';
     container.querySelector("#orPlay").addEventListener("click", function(){ speak(item.text, {}); });
+    var recorded = false;
     container.querySelector("#orCheck").addEventListener("click", function(){
       var typed = normalizeWord(container.querySelector("#orInput").value.trim());
-      var ok = typed.length > 0 && item.keywords.some(function(k){ return typed.indexOf(normalizeWord(k)) !== -1; });
-      recordActivity("respostaOral", ok);
+      if (!typed){ emptyWarning(container.querySelector("#orResult")); return; }
+      var ok = item.keywords.some(function(k){ return typed.indexOf(normalizeWord(k)) !== -1; });
+      if (!recorded){ recorded = true; recordActivity("respostaOral", ok); }
       container.querySelector("#orResult").innerHTML =
         '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Molt bé, la teva resposta inclou la informació clau!" : "Revisa-ho: potser et falta algun detall important.") + '</div>' +
         '<p class="section-hint" style="margin-top:8px;">Resposta model: «' + item.model + '»</p>';
@@ -2314,6 +2368,7 @@
       speak(sentence, { onBoundary: function(ci){ highlightWordAt(built.spans, built.offsets, ci); } });
     });
     container.querySelector("#lgDone").addEventListener("click", function(){
+      container.querySelector("#lgDone").disabled = true;
       recordActivity("lecturaGuiada", true);
       container.querySelector("#lgResult").innerHTML = '<div class="feedback-banner ok">Molt bé! Continua practicant amb el ressaltat com a guia.</div>';
     });
@@ -2396,6 +2451,7 @@
       wrap.appendChild(row);
     });
     container.querySelector("#saDone").addEventListener("click", function(){
+      container.querySelector("#saDone").disabled = true;
       recordActivity("suportAuditiu", true);
       container.querySelector("#saResult").innerHTML = '<div class="feedback-banner ok">Molt bé!</div>';
     });
@@ -2424,6 +2480,7 @@
       playNext();
     });
     container.querySelector("#ppDone").addEventListener("click", function(){
+      container.querySelector("#ppDone").disabled = true;
       recordActivity("lecturaPauses", true);
       container.querySelector("#ppResult").innerHTML = '<div class="feedback-banner ok">Molt bé, marcar les pauses ajuda a llegir amb més entonació!</div>';
     });
@@ -2852,14 +2909,14 @@
      Tres accions immediates (repte, monstres, progrés) i les seccions en targetes. Les pestanyes
      queden amagades: es navega des d'aquí i cada secció té el botó «‹ Inici». */
   var SECTIONS = [
-    { tab:"panel-reader", icon:"📖", name:"Lectura", desc:"Llegeix amb veu i ressaltat." },
-    { tab:"panel-fonologia", icon:"👂", name:"Fonologia", desc:"Juga amb els sons." },
-    { tab:"panel-exercises", icon:"🔤", name:"Descodificació", desc:"Lletres, síl·labes i rimes." },
-    { tab:"panel-dictation", icon:"✏️", name:"Ortografia", desc:"Dictats i patrons." },
-    { tab:"panel-vocabulari", icon:"💬", name:"Vocabulari", desc:"Paraules noves i famílies." },
-    { tab:"panel-comprensio", icon:"🧠", name:"Comprensió", desc:"Entén i resumeix textos." },
-    { tab:"panel-missions", icon:"🎯", name:"Missions", desc:"Reptes i escape room." },
-    { tab:"panel-progress", icon:"📈", name:"Progrés", desc:"Assoliments i informes." }
+    { tab:"panel-reader", icon:"lectura", name:"Lectura", desc:"Llegeix amb veu i ressaltat." },
+    { tab:"panel-fonologia", icon:"fonologia", name:"Fonologia", desc:"Juga amb els sons." },
+    { tab:"panel-exercises", icon:"descodificacio", name:"Descodificació", desc:"Lletres, síl·labes i rimes." },
+    { tab:"panel-dictation", icon:"ortografia", name:"Ortografia", desc:"Dictats i patrons." },
+    { tab:"panel-vocabulari", icon:"vocabulari", name:"Vocabulari", desc:"Paraules noves i famílies." },
+    { tab:"panel-comprensio", icon:"comprensio", name:"Comprensió", desc:"Entén i resumeix textos." },
+    { tab:"panel-missions", icon:"missions", name:"Missions", desc:"Reptes i escape room." },
+    { tab:"panel-progress", icon:"progres", name:"Progrés", desc:"Assoliments i informes." }
   ];
   function goTab(target){
     var tab = document.querySelector('#mainTabs [data-target="' + target + '"]');
@@ -2899,7 +2956,7 @@
       btn.type = "button";
       btn.className = "home-section";
       btn.dataset.target = sec.tab;
-      btn.innerHTML = '<span class="hs-icon" aria-hidden="true">' + sec.icon + '</span><span class="name">' + sec.name + '</span>' +
+      btn.innerHTML = '<img class="hs-icon" src="img/sec-' + sec.icon + '.png" alt=""><span class="name">' + sec.name + '</span>' +
         '<span class="desc">' + sec.desc + '</span>' +
         (types.length ? '<span class="hs-meter game-only">' + tried + " de " + types.length + " provades</span>" : "");
       btn.addEventListener("click", function(){ goTab(sec.tab); });
