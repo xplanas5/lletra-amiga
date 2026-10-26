@@ -125,3 +125,12 @@ textarea.field{ min-height:110px; }
 
 /* ---------- Activitat oberta (lògica compartida a js/app.js) ---------- */
 html.in-activity .app{ padding-bottom:24px; }
+
+/* ---------- Gamificació: indicador compacte a la capçalera ---------- */
+.game-hud{ height:40px; padding:0 10px; gap:6px; font-size:13.5px; }
+.game-hud .hud-part:nth-child(2){ display:none; }
+#openProfiles #currentProfileName{ display:none; }
+#openProfiles{ width:40px; padding:0; justify-content:center; font-size:19px; }
+.game-toast{ bottom:calc(var(--nav-h) + 16px); }
+html.in-activity .game-toast, html.kb-open .game-toast{ bottom:24px; }
+.badge-grid{ grid-template-columns:1fr 1fr; }

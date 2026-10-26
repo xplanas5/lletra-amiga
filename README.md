@@ -57,6 +57,20 @@ Per ampliar-los sense tocar el codi hi ha l'**editor de contingut** (`editor.htm
 
 Ordre d'aplicació: `contingut.json` publicat → adreça web → paquet del dispositiu. Els textos propis es netegen d'etiquetes HTML i els ítems invàlids es descarten.
 
+## Gamificació
+
+`js/game.js` afegeix elements de joc pensats per a la dislèxia: es premia l'esforç, l'error no resta mai, no hi ha límit de temps ni rànquings (cadascú es compara amb si mateix).
+
+- **Punts i nivells**: cada exercici suma 3 punts per l'esforç i 7 més si s'encerta. Els nivells segueixen una metàfora de creixement (🌱 Llavor → 🌳 Arbre → 🌟 Constel·lació).
+- **Ratxa diària** amb un comodí setmanal: un dia perdut cada 7 dies no la trenca.
+- **Objectiu diari** (5, 10 o 20 exercicis, als ajustos): en arribar-hi, +20 punts.
+- **Repte del dia**: una activitat triada per a cada perfil (primer el repàs pendent, després el que costa i després el que no s'ha provat). Superar-lo dona +30 punts.
+- **26 insígnies**: constància, exercicis, una per àrea, «Aprenc dels errors» (encertar el que abans s'havia fallat), «Tastaolletes», «Repàs a temps»…
+- **Avatars**: 12 d'inicials i 6 que es desbloquegen pujant de nivell.
+- **Estrelles** (★★★) a cada targeta d'activitat segons el domini, i «✨ Nova» a les no provades.
+
+Es veu a la capçalera (nivell, ratxa i objectiu; obre els assoliments), a la portada i a la targeta *Els teus assoliments* de *Progrés*. Les celebracions respecten «reduir moviment» i el so no sona mentre parla la veu. Als *Ajustos de lectura* es pot amagar tot (les dades es continuen desant) i treure el so. L'estat es desa a `progress.game` de cada perfil, de manera que es sincronitza amb el núvol; els perfils anteriors reben d'entrada els punts i les insígnies que corresponen a l'activitat que ja havien fet.
+
 ## Informes de treball
 
 A la pestanya *Progrés*, el botó **Informe de treball** genera un informe per perfil i període (7 o 30 dies, 3 mesos, curs, tot o personalitzat) amb: resum (dies, exercicis, encerts, temps estimat), observacions automàtiques, resultats per àrees i per activitat, activitat diària, elements a reforçar (paraules i frases fallades), velocitat lectora, autoavaluació, repàs pendent i un camp d'observacions per al professional o la família. Amb diversos perfils hi ha també un **resum de grup**. Es pot imprimir o desar en PDF i baixar en CSV (separat per `;`, s'obre amb Excel). Els detalls depenen del registre d'activitat (`progress.log`), que comença amb aquesta versió; l'activitat anterior només surt en el recompte d'exercicis.

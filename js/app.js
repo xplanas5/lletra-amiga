@@ -4,6 +4,7 @@
   /* ---------------- Data ----------------
      Els exemples són a js/banks.js; js/content.js hi afegeix el contingut propi (editor.html). */
   var BANKS = window.LletraContent ? window.LletraContent.banks : window.LLETRA_DEFAULT_BANKS;
+  var Game = window.LletraGame || null;
   var SAMPLES = BANKS.SAMPLES;
 
   var SYLLABLE_WORDS = BANKS.SYLLABLE_WORDS;
@@ -106,6 +107,7 @@
     loadProfileData();
     applySettings();
     renderProgress();
+    if (Game) Game.render();
   }
 
   function renderProfileUI(){
@@ -121,7 +123,8 @@
 
       var nameBtn = document.createElement("button");
       nameBtn.className = "name";
-      nameBtn.textContent = p.name + (p.id === activeProfileId ? " (actiu)" : "");
+      var avatar = Game && Game.avatarFor(p.id === activeProfileId ? progress : loadJSON(progressKeyFor(p.id), {}));
+      nameBtn.textContent = (avatar && settings.game !== false ? avatar + " " : "") + p.name + (p.id === activeProfileId ? " (actiu)" : "");
       nameBtn.addEventListener("click", function(){
         if (p.id !== activeProfileId){ switchProfile(p.id); renderProfileUI(); }
       });
@@ -288,6 +291,7 @@
     } else if (r){
       if (r.interval >= REVIEW_INTERVALS[REVIEW_INTERVALS.length - 1]){
         delete progress.review[type];
+        if (Game) Game.onReviewCleared();
       } else {
         var next = nextReviewInterval(r.interval);
         progress.review[type] = { interval:next, due:futureDateStr(next), misses:r.misses };
@@ -310,8 +314,11 @@
   function goToActivityTab(type){
     var info = TYPE_INFO[type];
     if (!info) return;
+    if (!cover.hidden) hideCover();
     var btn = document.querySelector('#mainTabs [data-target="' + info.tab + '"]');
     if (btn) btn.click();
+    var card = document.querySelector("#" + info.tab + ' .activity-card[data-type="' + type + '"]');
+    if (card) card.click();
   }
 
   function submitSelfEval(rating){
@@ -319,6 +326,7 @@
     progress.selfEval = progress.selfEval.filter(function(e){ return e.date !== t; });
     progress.selfEval.push({ date:t, rating:rating });
     if (progress.selfEval.length > 60) progress.selfEval.shift();
+    if (Game) Game.check();
     saveProgress();
     renderSelfEval();
   }
@@ -341,6 +349,7 @@
     progress.daily[t] = (progress.daily[t] || 0) + 1;
     if (progress.streakDates.indexOf(t) === -1) progress.streakDates.push(t);
     updateReview(type, wasCorrect);
+    if (Game) Game.onActivity(type, wasCorrect);
     saveProgress();
   }
 
@@ -1239,12 +1248,20 @@
   }
 
   /* ---------------- Graella d'activitats (genèrica) ---------------- */
+  // Tipus de progrés de cada targeta (els identificadors són els tipus en minúscules amb guionets).
+  function activityType(id){
+    var special = { "lletres":"letters", "sillabes-compte":"syllables", "rimes":"rhymes", "completa":"completaParaula",
+      "dictat-interactiu":"dictation", "parelles-so":"parelles" };
+    return special[id] || id.replace(/-([a-z])/g, function(_, c){ return c.toUpperCase(); });
+  }
   function renderActivityGrid(grid, activities, onOpen){
     grid.innerHTML = "";
     activities.forEach(function(a){
       var btn = document.createElement("button");
       btn.className = "activity-card";
       btn.disabled = !a.render;
+      var type = activityType(a.id);
+      if (TYPE_INFO[type]) btn.dataset.type = type;
       btn.innerHTML = '<span class="name">' + a.name + '</span><span class="desc">' + a.desc + '</span>' +
         (a.render ? "" : '<span class="soon">Properament</span>');
       if (a.render) btn.addEventListener("click", function(){ onOpen(a); });
@@ -2524,7 +2541,8 @@
     var avgAcc = totalAttempts ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
 
     var streak = 0, d = new Date();
-    while (true){
+    if (Game) streak = Game.streak();
+    else while (true){
       var s = d.toISOString().slice(0,10);
       if (progress.streakDates.indexOf(s) !== -1){ streak++; d.setDate(d.getDate() - 1); } else break;
     }
@@ -2673,6 +2691,7 @@
       missioLectura:{a:0,c:0}, escapeRoom:{a:0,c:0}
     } };
     saveProgress(); renderProgress();
+    if (Game) Game.render();
   });
 
   /* ---------------- Contingut (bancs d'exemples) ---------------- */
@@ -2790,6 +2809,27 @@
   var skipCover = false;
   try{ skipCover = localStorage.getItem(COVER_KEY) === "1"; }catch(e){}
   if (!skipCover) showCover();
+
+  /* ---------------- Gamificació (js/game.js) ---------------- */
+  if (Game){
+    Game.init({
+      progress: function(){ return progress; },
+      settings: function(){ return settings; },
+      save: saveProgress,
+      saveSettings: function(){ saveSettings(); renderProfileUI(); },
+      profileId: function(){ return activeProfileId; },
+      profileName: function(){ var p = profiles.find(function(x){ return x.id === activeProfileId; }); return p ? p.name : ""; },
+      typeInfo: TYPE_INFO,
+      openActivity: goToActivityTab,
+      openProgress: function(){
+        if (!cover.hidden) hideCover();
+        closeActivities();
+        var tab = document.querySelector('#mainTabs [data-target="panel-progress"]');
+        if (tab) tab.click();
+        document.getElementById("gameCard").scrollIntoView({ block:"start" });
+      }
+    });
+  }
 
   /* ---------------- Init ---------------- */
   renderProfileUI();

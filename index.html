@@ -19,6 +19,8 @@
       <p class="cover-lead">Entrenament lector i ortogràfic pensat per a persones amb dislèxia. Tria per on vols començar:</p>
     </div>
 
+    <div class="cover-game game-only" id="coverGame"></div>
+
     <div class="cover-grid">
       <button class="cover-card" data-go="panel-reader"><span class="cover-icon" aria-hidden="true">📖</span><span class="name">Lectura</span><span class="desc">Lector adaptat amb veu, lectura guiada i fluïdesa.</span></button>
       <button class="cover-card" data-go="panel-fonologia"><span class="cover-icon" aria-hidden="true">👂</span><span class="name">Fonologia</span><span class="desc">Escoltar, separar i canviar els sons de les paraules.</span></button>
@@ -64,7 +66,8 @@
       <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-progress">Progrés</button>
     </nav>
     <div class="header-actions">
-      <button class="icon-btn" id="openProfiles" aria-haspopup="dialog">👤 <span id="currentProfileName">Perfil 1</span></button>
+      <button class="icon-btn game-hud game-only" id="gameHud" type="button"></button>
+      <button class="icon-btn" id="openProfiles" aria-haspopup="dialog"><span id="currentProfileAvatar" aria-hidden="true">👤</span> <span id="currentProfileName">Perfil 1</span></button>
       <button class="icon-btn" id="openSettings" aria-haspopup="dialog">⚙ Ajustos de lectura</button>
       <button class="icon-btn" id="openAccount" aria-haspopup="dialog" hidden>☁ <span id="accountLabel">Inicia sessió</span></button>
     </div>
@@ -208,6 +211,7 @@
 
   <!-- ================= PROGRESS ================= -->
   <section class="panel stack" id="panel-progress" role="tabpanel" hidden>
+    <div class="card stack game-card game-only" id="gameCard"></div>
     <div class="card stack">
       <div class="progress-head">
         <p class="section-title">El teu progrés</p>
@@ -318,6 +322,34 @@
       <div class="range-row"><span>Lenta</span><span id="rateValue">0.9×</span><span>Normal</span></div>
     </div>
 
+    <div class="field-group">
+      <div class="toggle-row">
+        <div>
+          <p class="field-label">Punts, insígnies i reptes</p>
+          <p class="field-note">Mostra el nivell, la ratxa, l'objectiu diari, el repte del dia i les estrelles de cada activitat.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="gameToggle" checked>
+          <span class="track"><span class="knob"></span></span>
+        </label>
+      </div>
+      <div class="game-only stack" style="gap:10px;">
+        <p class="field-label">Objectiu diari (exercicis)</p>
+        <div class="segmented" id="goalSeg">
+          <button data-value="5" aria-pressed="false">5</button>
+          <button data-value="10" aria-pressed="true">10</button>
+          <button data-value="20" aria-pressed="false">20</button>
+        </div>
+        <div class="toggle-row">
+          <p class="field-label">So de celebració</p>
+          <label class="switch">
+            <input type="checkbox" id="gameSoundToggle" checked>
+            <span class="track"><span class="knob"></span></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <div class="field-group content-group">
       <p class="field-label">Exemples i contingut</p>
       <p class="field-note" id="contentSummary"></p>
@@ -395,6 +427,7 @@
 <script src="js/banks.js"></script>
 <script src="js/content.js"></script>
 <script src="js/reports.js"></script>
+<script src="js/game.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
