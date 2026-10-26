@@ -851,25 +851,106 @@ window.LLETRA_DEFAULT_BANKS = {
     { text:"En Aniol vol ser astronauta. Cada nit mira les estrelles amb el telescopi que li van regalar pel seu aniversari.", question:"Amb què mira les estrelles en Aniol?", keywords:["telescopi"], model:"Amb el telescopi que li van regalar." }
   ],
 
-  /* ---------------- Missions ---------------- */
+  /* ---------------- Missions ----------------
+     Missió pràctica: un document real (cartell, recepta, horari…) i una situació. Cal omplir una fitxa
+     amb dades del document (answers: respostes acceptades) i marcar una llista de comprovació.
+     Escape room: cada objecte de la sala amaga una prova (pregunta: escriure la resposta; errors: tocar
+     les paraules mal escrites). Si se supera, dona una peça del codi; la nota de la porta diu l'ordre. */
   MISSION_ITEMS: [
-    { title:"Missió: organitza la sortida", text:"Demà l'escola farà una sortida al Museu de Ciències. L'autobús surt del pati a les 8.30 del matí i torna a les 17.00. Cal portar l'esmorzar, una ampolla d'aigua i el carnet d'estudiant. El preu de l'entrada, que ja està pagat, és de 6 euros.", questions:[
-        { q:"A quina hora surt l'autobús?", options:["A les 8.30 del matí","A les 17.00","A les 6 del matí"], correct:"A les 8.30 del matí" },
-        { q:"Què cal portar a més de l'esmorzar i l'aigua?", options:["El carnet d'estudiant","Els diners de l'entrada","Un paraigua"], correct:"El carnet d'estudiant" }
+    { title:"Inscriu-te a l'excursió", intro:"La teva classe va d'excursió. Llegeix el cartell, omple la fitxa d'inscripció i prepara la motxilla.",
+      doc:"EXCURSIÓ AL MUSEU DE CIÈNCIES\nDia: dijous 14 de novembre\nSortida: a les 8.30 h, des del pati de l'escola\nTornada: a les 17.00 h\nPreu: 6 euros (es paga com a molt tard el dimarts 12)\nCal portar: esmorzar, dinar, una ampolla d'aigua i el carnet d'estudiant.\nNo cal portar diners: la botiga del museu estarà tancada.",
+      fields:[
+        { label:"Lloc on aneu", answers:["Museu de Ciències", "el Museu de Ciències"] },
+        { label:"Hora de sortida", answers:["8.30", "8:30", "8 i mitja", "les 8.30"] },
+        { label:"Preu de l'excursió (euros)", answers:["6", "sis", "6 euros"] },
+        { label:"Últim dia per pagar", answers:["dimarts 12", "12 de novembre", "dimarts"] }
+      ],
+      checkQ:"Què has de posar a la motxilla?",
+      checkItems:["Esmorzar", "Dinar", "Ampolla d'aigua", "Carnet d'estudiant", "Diners per a la botiga", "Pilota de futbol"],
+      checkCorrect:["Esmorzar", "Dinar", "Ampolla d'aigua", "Carnet d'estudiant"] },
+    { title:"Cuina galetes per a la festa", intro:"Vols fer 24 galetes per a la festa de la classe. A casa ja tens farina i sucre. Llegeix la recepta i prepara-ho tot.",
+      doc:"GALETES DE XOCOLATA (per a 12 galetes)\nIngredients: 200 g de farina, 100 g de sucre, 100 g de mantega, 80 g de xocolata i 1 ou.\n1. Escalfa el forn a 180 graus.\n2. Barreja la mantega amb el sucre.\n3. Afegeix l'ou, la farina i la xocolata a trossets.\n4. Fes boletes i posa-les a la safata.\n5. Cou-les 12 minuts.",
+      fields:[
+        { label:"Temperatura del forn (graus)", answers:["180", "180 graus"] },
+        { label:"Minuts que han d'estar al forn", answers:["12", "dotze", "12 minuts"] },
+        { label:"Grams de farina per fer 24 galetes", answers:["400", "400 g", "400 grams"] },
+        { label:"Ous per fer 24 galetes", answers:["2", "dos", "2 ous"] }
+      ],
+      checkQ:"Què has d'anar a comprar?",
+      checkItems:["Farina", "Sucre", "Mantega", "Xocolata", "Ous", "Llet", "Pernil"],
+      checkCorrect:["Mantega", "Xocolata", "Ous"] },
+    { title:"Agafa el tren a temps", intro:"És dissabte 23 de novembre. Has quedat a Barcelona a les 12.00 i vols agafar el tren més tard que t'hi faci arribar a temps.",
+      doc:"HORARI DE TRENS Vic – Barcelona (dissabtes)\nSurt a les 8.05 · arriba a les 9.35\nSurt a les 9.05 · arriba a les 10.35\nSurt a les 10.05 · arriba a les 11.35\nSurt a les 11.05 · arriba a les 12.35\nBitllet d'anada: 5,40 euros. Anada i tornada: 10,80 euros.\nAVÍS: el 23 de novembre el tren de les 9.05 no circula per obres.",
+      fields:[
+        { label:"Hora de sortida del teu tren", answers:["10.05", "10:05"] },
+        { label:"Hora d'arribada a Barcelona", answers:["11.35", "11:35"] },
+        { label:"Preu del bitllet d'anada i tornada (euros)", answers:["10,80", "10.80", "10,8"] }
+      ],
+      checkQ:"Quins trens NO et serveixen aquell dia?",
+      checkItems:["El de les 8.05", "El de les 9.05", "El de les 10.05", "El de les 11.05"],
+      checkCorrect:["El de les 9.05", "El de les 11.05"] },
+    { title:"Tarda de cinema", intro:"Tens 13 anys i dimecres vas al cinema amb el teu germà, que en té 9. Heu de tornar a casa abans de les 20.00.",
+      doc:"CINEMA ESPLAI · Cartellera de dimecres\nEl drac de gel · Per a tots els públics · Sessions: 17.00 i 19.30 · Dura 95 minuts\nOperació Lluna · Per a majors de 12 anys · Sessió: 18.00 · Dura 110 minuts\nNit fosca · Per a majors de 16 anys · Sessió: 20.00 · Dura 100 minuts\nEntrada: 7 euros. Dimecres, dia de l'espectador: 5 euros.",
+      fields:[
+        { label:"Pel·lícula que podeu veure tots dos", answers:["El drac de gel", "drac de gel"] },
+        { label:"Sessió a la qual aneu", answers:["17.00", "17:00", "17", "a les 5"] },
+        { label:"Preu de les dues entrades (euros)", answers:["10", "deu", "10 euros"] }
+      ],
+      checkQ:"Quines pel·lícules NO pot veure el teu germà?",
+      checkItems:["El drac de gel", "Operació Lluna", "Nit fosca"],
+      checkCorrect:["Operació Lluna", "Nit fosca"] },
+    { title:"Fes la compra", intro:"Tens 7 euros. La llista de la compra diu: 1 barra de pa, 2 litres de llet i mitja dotzena d'ous.",
+      doc:"BOTIGA CAL PEP · Preus\nBarra de pa: 1,20 €\nLlet (1 litre): 1,10 €\nOus (mitja dotzena): 2,30 €\nFormatge: 3,50 €\nGaletes: 1,90 €\nXiclets: 0,80 €\nPoma: 0,45 €\nOFERTA: 2 litres de llet per 2 €.",
+      fields:[
+        { label:"Quant pagues en total (euros)", answers:["5,50", "5.50", "5,5"] },
+        { label:"Quant et tornen (euros)", answers:["1,50", "1.50", "1,5"] }
+      ],
+      checkQ:"Amb el canvi, quins productes podries comprar (un de sol)?",
+      checkItems:["Formatge", "Galetes", "Xiclets", "Poma"],
+      checkCorrect:["Xiclets", "Poma"] },
+    { title:"Cuida la planta de la classe", intro:"Al gener et toca cuidar el potus de la classe. Llegeix la fitxa de cures.",
+      doc:"FITXA DE CURES: POTUS\nLlum: molta llum, però sense sol directe.\nReg: a l'estiu, dos cops per setmana. A l'hivern, un cop per setmana.\nAigua: mig got cada vegada. Abans de regar, toca la terra: si encara és humida, espera un dia.\nAdob: un cop al mes, només de març a setembre.\nAtenció: les fulles són tòxiques per als gats.",
+      fields:[
+        { label:"Cops per setmana que l'has de regar", answers:["1", "un", "una", "un cop", "una vegada"] },
+        { label:"Aigua que li poses cada vegada", answers:["mig got", "mig"] }
+      ],
+      checkQ:"Què has de fer aquest mes?",
+      checkItems:["Tocar la terra abans de regar", "Tenir-la en un lloc amb llum", "Posar-hi adob", "Posar-la al sol directe", "Regar-la cada dia"],
+      checkCorrect:["Tocar la terra abans de regar", "Tenir-la en un lloc amb llum"] }
+  ],
+  ESCAPE_ROOMS: [
+    { title:"La biblioteca tancada", story:"T'has quedat tancat a la biblioteca de l'escola. La porta té un cadenat de 3 xifres. Investiga els objectes de la sala: cada un amaga una xifra.",
+      lockHint:"Nota enganxada a la porta: «Primer va la xifra del llibre vermell, després la de la carta i al final la del rellotge.»",
+      code:"467",
+      puzzles:[
+        { object:"📕 Llibre vermell", kind:"pregunta", text:"Dins del llibre hi ha un paper: «El gat, el gos i el conill dormien sota l'arbre mentre una oreneta cantava.»", question:"Quants animals surten a la frase?", answers:["4", "quatre"], piece:"4" },
+        { object:"⏰ Rellotge", kind:"errors", text:"Cada tarda a les sis, la bibliotecaria tanca les finestres i apaga els llums. Despres revisa els llibres que s'han quedat a les taules.", question:"Hi ha 2 paraules mal escrites. Toca-les.", answers:["bibliotecaria", "Despres"], piece:"7" },
+        { object:"✉️ Carta antiga", kind:"pregunta", text:"Sempre que entris, mira amunt.\nInvestiga els prestatges de dalt.\nSegur que hi trobaràs la pista.", question:"Llegeix només la primera lletra de cada línia. Quin número formen?", answers:["sis", "6"], piece:"6" }
       ] },
-    { title:"Missió: prepara la recepta", text:"Per fer galetes de xocolata calen 200 grams de farina, 100 grams de sucre, 80 grams de xocolata i un ou. Cal barrejar-ho tot i coure-ho al forn 12 minuts a 180 graus.", questions:[
-        { q:"Quants grams de xocolata calen?", options:["80 grams","100 grams","200 grams"], correct:"80 grams" },
-        { q:"Quants minuts cal coure les galetes?", options:["12 minuts","180 minuts","8 minuts"], correct:"12 minuts" }
+    { title:"El laboratori del Dr. Lletres", story:"El Dr. Lletres ha tancat el laboratori i la seva poció està a punt de vessar! L'armari de l'antídot s'obre amb una paraula secreta de 3 lletres.",
+      lockHint:"Al cadenat hi diu: «Escriu la lletra del microscopi, després la de la pissarra i al final la del flascó.»",
+      code:"SOL",
+      puzzles:[
+        { object:"🔬 Microscopi", kind:"pregunta", text:"Instruccions del microscopi:\n1. Encén el llum.\n2. Posa la mostra sobre el vidre.\n3. Mira per l'ocular.\n4. Gira la rodeta fins que la imatge sigui nítida.", question:"Amb quin verb comença el pas número 3?", answers:["mira", "mirar"], piece:"S" },
+        { object:"📝 Pissarra", kind:"errors", text:"Recordeu: avans de barrejar els liquids, poseu-vos les ulleres i els guants.", question:"Hi ha 2 paraules mal escrites. Toca-les.", answers:["avans", "liquids"], piece:"O" },
+        { object:"⚗️ Flascó", kind:"pregunta", text:"Etiqueta: «Antídot. Prendre'n tres gotes amb mig got d'aigua. No barrejar amb llet. Guardar a la nevera.»", question:"On s'ha de guardar l'antídot?", answers:["a la nevera", "nevera"], piece:"L" }
       ] },
-    { title:"Missió: troba l'horari", text:"La piscina municipal obre de dilluns a divendres de 7 a 21 h, i els caps de setmana de 9 a 14 h. Els dimarts i dijous a les 18 h hi ha classes de natació per a nens.", questions:[
-        { q:"A quina hora obre la piscina els caps de setmana?", options:["A les 9 h","A les 7 h","A les 18 h"], correct:"A les 9 h" },
-        { q:"Quins dies hi ha classes de natació per a nens?", options:["Dimarts i dijous","Dissabte i diumenge","Cada dia"], correct:"Dimarts i dijous" }
+    { title:"El tresor del vaixell pirata", story:"Ets a la bodega d'un vaixell pirata. El cofre del tresor té un cadenat de 3 xifres. Busca les pistes!",
+      lockHint:"Gravat al cofre: «La primera xifra és la del barril, la segona la de la bandera i la tercera la del mapa.»",
+      code:"298",
+      puzzles:[
+        { object:"🗺️ Mapa", kind:"pregunta", text:"Al mapa hi ha escrit: «Des de la palmera, camina 5 passes cap al nord i després 3 passes cap a l'est. Allà, cava.»", question:"Quantes passes has de fer en total?", answers:["8", "vuit"], piece:"8" },
+        { object:"🛢️ Barril", kind:"errors", text:"El capità va amagar el tresor a la ylla del sud, sota una roca molt grosa.", question:"Hi ha 2 paraules mal escrites. Toca-les.", answers:["ylla", "grosa"], piece:"2" },
+        { object:"🚩 Bandera", kind:"pregunta", text:"Navega sempre de nit.\nObre bé els ulls.\nUna gavina et guiarà.", question:"Llegeix només la primera lletra de cada línia. Quin número formen?", answers:["nou", "9"], piece:"9" }
       ] },
-    { title:"Missió: organitza la festa", text:"La festa d'aniversari de l'Aina serà dissabte a les 17 h al parc de les Moreres. Cada convidat ha de portar un dibuix per a l'Aina. Si plou, la festa es farà al gimnàs de l'escola. Cal confirmar l'assistència abans de dijous.", questions:[{ q:"On es farà la festa si plou?", options:["Al gimnàs de l'escola","Al parc de les Moreres","A casa de l'Aina"], correct:"Al gimnàs de l'escola" },{ q:"Què ha de portar cada convidat?", options:["Un dibuix","Un pastís","Una pilota"], correct:"Un dibuix" }] },
-    { title:"Missió: agafa el tren", text:"El tren cap a Girona surt de l'andana 3 a les 10.15 h i arriba a les 11.40 h. El bitllet d'anada costa 9 euros. Els nens menors de 4 anys no paguen.", questions:[{ q:"De quina andana surt el tren?", options:["De l'andana 3","De l'andana 10","De l'andana 4"], correct:"De l'andana 3" },{ q:"A quina hora arriba a Girona?", options:["A les 11.40 h","A les 10.15 h","A les 9 h"], correct:"A les 11.40 h" }] },
-    { title:"Missió: cuida la planta", text:"Aquesta planta necessita llum, però no sol directe. Rega-la dues vegades per setmana amb mig got d'aigua. A l'hivern, n'hi ha prou amb regar-la una vegada per setmana.", questions:[{ q:"Quantes vegades cal regar-la a l'hivern?", options:["Una vegada per setmana","Dues vegades per setmana","Cada dia"], correct:"Una vegada per setmana" },{ q:"Quanta aigua cal cada vegada?", options:["Mig got","Un got sencer","Una ampolla"], correct:"Mig got" }] },
-    { title:"Missió: el préstec de la biblioteca", text:"Pots endur-te fins a 4 llibres durant 21 dies. Si necessites més temps, pots renovar el préstec una vegada per internet o al taulell. Les pel·lícules només es poden tenir 7 dies.", questions:[{ q:"Quants llibres et pots endur com a màxim?", options:["4","21","7"], correct:"4" },{ q:"Quants dies pots tenir una pel·lícula?", options:["7 dies","21 dies","4 dies"], correct:"7 dies" }] },
-    { title:"Missió: el joc de taula", text:"Cada jugador comença amb 5 cartes. Per torns, tira el dau i avança tantes caselles com indica. Si caus en una casella vermella, perds un torn. Guanya qui arriba primer a la casella final.", questions:[{ q:"Amb quantes cartes comença cada jugador?", options:["5","6","1"], correct:"5" },{ q:"Què passa si caus en una casella vermella?", options:["Perds un torn","Guanyes la partida","Tornes a tirar"], correct:"Perds un torn" }] }
+    { title:"La casa de l'àvia", story:"L'àvia ha amagat el teu regal de l'aniversari en una caixa forta. La combinació té 3 xifres i les pistes són per tota la sala.",
+      lockHint:"Post-it a la caixa forta: «Comença per la xifra de la nevera, segueix amb la de la fotografia i acaba amb la del calendari.»",
+      code:"153",
+      puzzles:[
+        { object:"🧊 Nevera", kind:"pregunta", text:"Llista de la compra enganxada a la nevera: «Pa, llet, tomàquets i 1 síndria. Res més, que la nevera és plena!»", question:"Quantes síndries cal comprar?", answers:["1", "una"], piece:"1" },
+        { object:"🖼️ Fotografia", kind:"errors", text:"Darrere la foto hi ha escrit: «Estiu a la platja amb tota la familia. Vam menjar jelats cada tarda.»", question:"Hi ha 2 paraules mal escrites. Toca-les.", answers:["familia", "jelats"], piece:"5" },
+        { object:"📅 Calendari", kind:"pregunta", text:"Al calendari hi ha marcats tres dies amb un cercle vermell: el dilluns, el dimecres i el divendres.", question:"Quants dies hi ha marcats?", answers:["3", "tres"], piece:"3" }
+      ] }
   ],
 
   /* ---------------- Lectura i fluïdesa ---------------- */

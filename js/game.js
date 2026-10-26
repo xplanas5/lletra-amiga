@@ -128,7 +128,7 @@
     { id:"errors", e:"💪", nom:"Aprenc dels errors", com:"Encerta 10 activitats que abans havies fallat.", f:function(t, g){ return g.recovered >= 10; } },
     { id:"repas", e:"🔁", nom:"Repàs a temps", com:"Completa el repàs d'una activitat.", f:function(t, g){ return g.reviewsCleared >= 1; } },
     { id:"tastaolletes", e:"🧭", nom:"Tastaolletes", com:"Prova 15 activitats diferents.", f:function(t){ return t.tried >= 15; } },
-    { id:"escapista", e:"🚪", nom:"Escapista", com:"Obre 5 portes de l'escape room.", f:function(){ var s = progress().stats.escapeRoom; return !!s && s.c >= 5; } },
+    { id:"escapista", e:"🚪", nom:"Escapista", com:"Supera 5 proves de l'escape room.", f:function(){ var s = progress().stats.escapeRoom; return !!s && s.c >= 5; } },
     { id:"emconec", e:"🪞", nom:"Em conec", com:"Valora la teva lectura 5 dies.", f:function(){ return (progress().selfEval || []).length >= 5; } },
     { id:"nivell5", e:"🌳", nom:"Nivell 5", com:"Arriba al nivell 5.", f:function(t, g){ return levelFor(g.xp) >= 5; } },
     { id:"nivell10", e:"🌈", nom:"Nivell 10", com:"Arriba al nivell 10.", f:function(t, g){ return levelFor(g.xp) >= 10; } }
@@ -148,7 +148,7 @@
     BADGES.forEach(function(b){
       if (!g.badges[b.id] && b.f(t, g, s)){ g.badges[b.id] = Date.now(); news.push(b); }
     });
-    if (!silent) news.forEach(function(b){ celebrate(b.e + " Nova insígnia: " + b.nom + "!", true); });
+    if (!silent) news.forEach(function(b){ celebrate(b.e + " Nova insígnia: " + b.nom + "!", true, "badge"); });
     return news.length;
   }
 
@@ -164,9 +164,9 @@
     }
     return el;
   }
-  function celebrate(msg, big){
+  function celebrate(msg, big, sound){
     if (!enabled()) return;
-    queue.push({ msg:msg, big:big });
+    queue.push({ msg:msg, big:big, sound: sound || (big ? "fanfare" : null) });
     if (!showing) nextToast();
   }
   function nextToast(){
@@ -176,7 +176,8 @@
     el.innerHTML = '<img src="img/' + (item.big ? "guineu-estrella" : "guineu-hola") + '.png" alt="" width="200" height="200"><span></span>';
     el.querySelector("span").textContent = item.msg;
     el.classList.add("on");
-    if (item.big){ confetti(); chime(); }
+    if (item.big) confetti();
+    if (item.sound) sfx(item.sound);
     setTimeout(function(){ el.classList.remove("on"); setTimeout(nextToast, 250); }, 2600);
   }
   function confetti(){
@@ -195,24 +196,8 @@
     document.body.appendChild(box);
     setTimeout(function(){ box.remove(); }, 3000);
   }
-  var audioCtx = null;
-  function chime(){
-    if (settings().gameSound === false) return;
-    if (window.speechSynthesis && window.speechSynthesis.speaking) return;   // no trepitja la veu
-    try{
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      audioCtx = audioCtx || new Ctx();
-      [523.25, 659.25, 783.99].forEach(function(f, i){
-        var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + i * 0.11;
-        o.frequency.value = f; o.type = "sine";
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.32);
-      });
-    }catch(e){}
-  }
+  // Efectes sonors (js/sfx.js): només sonen si el joc i el so estan activats.
+  function sfx(name, arg){ if (window.LletraSfx) window.LletraSfx.play(name, arg); }
   function bump(xp){
     var hud = document.getElementById("gameHud");
     if (!hud || !enabled()) return;
@@ -227,10 +212,10 @@
   var lastRecoveryToast = 0;
   function onActivity(type, ok){
     var g = game(), before = levelFor(g.xp), gained = XP_INTENT + (ok ? XP_ENCERT : 0);
-    if (ok && enabled()){ ding(); burst(); }
     if (ok){
       g.combo += 1;
       if (g.combo > g.bestCombo) g.bestCombo = g.combo;
+      if (enabled()){ sfx(g.combo % 5 === 0 ? "combo" : "correct", g.combo); burst(); }
       if (g.combo === 5 || g.combo === 10 || g.combo === 20) celebrate("⚡ " + g.combo + " encerts seguits!", false);
       if (g.failed[type]){
         delete g.failed[type]; g.recovered += 1;
@@ -238,6 +223,7 @@
       }
     } else {
       g.combo = 0; g.failed[type] = 1;
+      sfx("wrong");
     }
 
     var today = todayStr(), goal = dailyGoal();
@@ -266,24 +252,7 @@
     celebrate("🎉 Has atrapat un monstre d'errors! Ja no tornarà.", true);
   }
 
-  /* ---------------- «Juice»: campaneta i esclat petit a cada encert ---------------- */
-  function ding(){
-    if (settings().gameSound === false) return;
-    if (window.speechSynthesis && window.speechSynthesis.speaking) return;
-    try{
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      audioCtx = audioCtx || new Ctx();
-      [1318.5, 1760].forEach(function(f, i){
-        var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + i * 0.07;
-        o.frequency.value = f; o.type = "triangle";
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.09, t + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.5);
-      });
-    }catch(e){}
-  }
+  /* ---------------- «Juice»: esclat petit a cada encert ---------------- */
   function burst(){
     if (reducedMotion()) return;
     var box = document.createElement("div");
@@ -438,6 +407,14 @@
   window.LletraGame = {
     init: function(accessors){
       api = accessors;
+      if (window.LletraSfx) window.LletraSfx.setEnabled(function(){ return enabled() && settings().gameSound !== false; });
+      // Sons d'interfície: obrir seccions i activitats, i tocs en activitats de seleccionar o muntar.
+      document.addEventListener("click", function(e){
+        var t = e.target.closest ? e.target.closest("button") : null;
+        if (!t || t.disabled) return;
+        if (t.matches(".home-section, .activity-card, .home-action")) sfx("open");
+        else if (t.matches(".letter-cell, .escape-object, [id$='Pool'] button, #mpChecks button, #srSentences button")) sfx("tap");
+      }, true);
       game();
       wireControls();
       render();

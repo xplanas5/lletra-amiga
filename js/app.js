@@ -85,7 +85,7 @@
         prediccio:{a:0,c:0}, preguntaDurant:{a:0,c:0}, ideaPrincipal:{a:0,c:0}, ordenaHistoria:{a:0,c:0},
         quePodemDeduir:{a:0,c:0}, evidenciaTextual:{a:0,c:0}, informacioImportant:{a:0,c:0},
         construeixResum:{a:0,c:0}, respostaOral:{a:0,c:0},
-        missioLectura:{a:0,c:0}, escapeRoom:{a:0,c:0}
+        missioLectura:{a:0,c:0}, escapeRoom:{a:0,c:0}, instruccions:{a:0,c:0}
       }
     }, loadJSON(progressKeyFor(activeProfileId), {}));
     decks = loadJSON(decksKeyFor(activeProfileId), {});
@@ -233,8 +233,9 @@
     construeixResum:{label:"Construeix el resum", domain:"comprensio", tab:"panel-comprensio"},
     respostaOral:{label:"Lectura i resposta oral", domain:"comprensio", tab:"panel-comprensio"},
 
-    missioLectura:{label:"Missió de lectura", domain:"missions", tab:"panel-missions"},
-    escapeRoom:{label:"Escape room textual", domain:"missions", tab:"panel-missions"}
+    missioLectura:{label:"Missió pràctica", domain:"missions", tab:"panel-missions"},
+    escapeRoom:{label:"Escape room", domain:"missions", tab:"panel-missions"},
+    instruccions:{label:"Segueix les instruccions", domain:"missions", tab:"panel-missions"}
   };
   var DOMAINS = ["fonologia", "descodificacio", "ortografia", "vocabulari", "lectura", "comprensio"];
   var DOMAIN_LABELS = {
@@ -1011,7 +1012,7 @@
     prediccio:"PREDICTION_ITEMS", preguntaDurant:"QUESTION_DURING_ITEMS", ideaPrincipal:"MAIN_IDEA_ITEMS",
     ordenaHistoria:"STORY_ORDER_ITEMS", quePodemDeduir:"INFERENCE_ITEMS", evidenciaTextual:"EVIDENCE_ITEMS",
     informacioImportant:"KEY_INFO_ITEMS", construeixResum:"SUMMARY_ITEMS", respostaOral:"ORAL_READING_ITEMS",
-    missioLectura:"MISSION_ITEMS"
+    missioLectura:"MISSION_ITEMS", escapeRoom:"ESCAPE_ROOMS"
   };
   function letterDiffHTML(typed, correct){
     var html = "";
@@ -2217,123 +2218,393 @@
   renderActivityGrid(comprensioGrid, COMPRENSIO_ACTIVITIES, openComprensioActivity);
   document.getElementById("comprensio-back").addEventListener("click", showComprensioGrid);
 
-  /* ---------------- Missions i gamificació: dades ---------------- */
+  /* ---------------- Missions: dades ---------------- */
   var MISSION_ITEMS = BANKS.MISSION_ITEMS;
+  var ESCAPE_ROOMS = BANKS.ESCAPE_ROOMS;
 
-  /* ---- Missió de lectura ---- */
-  function renderMissioDeLectura(container){
-    var item = pickRandom(MISSION_ITEMS);
-    renderMissioView(container, item, 0);
-  }
-  function renderMissioView(container, item, qIndex){
-    if (qIndex >= item.questions.length){
-      container.innerHTML =
-        '<p class="section-hint">' + item.title + '</p>' +
-        '<div class="text-surface" style="min-height:auto; padding:18px;"><div class="reading-text adaptive-text">' + item.text + '</div></div>' +
-        '<div class="feedback-banner ok" style="margin-top:10px;">🏁 Missió complerta! Has trobat totes les dades que necessitaves.</div>' +
-        '<div><button class="ghost-btn" id="msNext">Nova missió</button></div>';
-      container.querySelector("#msNext").addEventListener("click", function(){ renderMissioDeLectura(container); });
-      return;
-    }
-    var q = item.questions[qIndex];
-    var opts = q.options.slice().sort(function(){ return Math.random() - 0.5; });
-    container.innerHTML =
-      '<p class="section-hint">' + item.title + ' — pregunta ' + (qIndex + 1) + ' de ' + item.questions.length + '</p>' +
-      '<div class="text-surface" style="min-height:auto; padding:18px;"><div class="reading-text adaptive-text">' + item.text + '</div></div>' +
-      '<p class="section-hint" style="margin-top:10px;">' + q.q + '</p>' +
-      '<div class="choice-row" id="msChoices"></div>' +
-      '<div id="msFeedback"></div>';
-    var row = container.querySelector("#msChoices");
-    opts.forEach(function(w){
-      var btn = document.createElement("button");
-      btn.className = "choice-btn";
-      btn.textContent = w;
-      btn.addEventListener("click", function(){
-        row.querySelectorAll("button").forEach(function(b){ b.disabled = true; if (b.textContent === q.correct) b.classList.add("correct"); });
-        var ok = w === q.correct;
-        if (!ok) btn.classList.add("incorrect");
-        recordActivity("missioLectura", ok);
-        container.querySelector("#msFeedback").innerHTML =
-          '<div class="feedback-banner ' + (ok ? "ok" : "bad") + '">' + (ok ? "Correcte!" : "La resposta correcta és: «" + q.correct + "».") + '</div>' +
-          '<div class="reader-toolbar" style="margin-top:10px;"><button class="ghost-btn" id="msContinue">Continua</button></div>';
-        container.querySelector("#msContinue").addEventListener("click", function(){ renderMissioView(container, item, qIndex + 1); });
-      });
-      row.appendChild(btn);
+  /* Compara una resposta escrita amb les acceptades sense tenir en compte accents, majúscules ni puntuació.
+     Si la resposta acceptada és un número, només es comparen les xifres («a les 8.30 h» = «8:30»). */
+  function plainText(s){ return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, ""); }
+  function answerMatches(typed, answers){
+    var t = plainText(typed), digits = String(typed).replace(/[^0-9]/g, "");
+    if (!t) return false;
+    return answers.some(function(a){
+      var p = plainText(a);
+      if (!p) return false;
+      if (/^[0-9]+$/.test(p)) return digits === p;
+      return t === p || (p.length > 2 && t.indexOf(p) !== -1);
     });
   }
+  // Document de la missió: la primera línia és el títol del cartell, horari, recepta…
+  function missionDocHTML(doc){
+    return '<div class="mission-doc adaptive-text">' + doc.split(/\n/).map(function(line, i){
+      return i === 0 ? '<p class="md-title">' + line + "</p>" : "<p>" + line + "</p>";
+    }).join("") + "</div>";
+  }
 
-  /* ---- Escape room textual (combina proves d'altres categories) ---- */
-  function buildSpellingDoor(){
-    var pattern = pickRandom(SPELLING_PATTERNS);
-    var pair = pickRandom(pattern.words);
-    var opts = [pair.correct, pair.wrong].sort(function(){ return Math.random() - 0.5; });
-    return { category:"Ortografia", prompt:"Quina és la forma correcta d'aquesta paraula?", options:opts, correct:pair.correct, explain:pattern.hint };
+  /* ---- Missió pràctica: llegir un document real per fer una tasca ---- */
+  var lastMission = null;
+  function renderMissioPractica(container){
+    var item = pickRandom(MISSION_ITEMS, function(it){ return it === lastMission; });
+    lastMission = item;
+    var checkItems = item.checkItems.slice().sort(function(){ return Math.random() - 0.5; });
+    container.innerHTML =
+      '<p class="section-hint">🎯 Missió: ' + item.title + '</p>' +
+      '<div class="mission-brief">' + item.intro + '</div>' +
+      missionDocHTML(item.doc) +
+      '<div class="reader-toolbar"><button class="play-btn" id="mpPlay">▶ Escolta el document</button></div>' +
+      '<div class="mission-form" id="mpForm"><p class="mf-title">📝 Fitxa de la missió</p></div>' +
+      '<div class="mission-form"><p class="mf-title">✅ ' + item.checkQ + '</p><div class="choice-row" id="mpChecks"></div></div>' +
+      '<div class="reader-toolbar"><button class="ghost-btn" id="mpCheck">Comprova la missió</button><button class="ghost-btn" id="mpNext">Nova missió</button></div>' +
+      '<div id="mpResult"></div>';
+    container.querySelector("#mpPlay").addEventListener("click", function(){ speak(item.doc.replace(/\n/g, ". "), {}); });
+    var form = container.querySelector("#mpForm");
+    var inputs = item.fields.map(function(f){
+      var row = document.createElement("label");
+      row.className = "mf-row";
+      var name = document.createElement("span");
+      name.textContent = f.label;
+      var input = document.createElement("input");
+      input.className = "field";
+      input.type = "text";
+      input.autocomplete = "off";
+      input.addEventListener("input", function(){ row.classList.remove("ok", "bad"); });
+      row.appendChild(name); row.appendChild(input);
+      form.appendChild(row);
+      return input;
+    });
+    var checksEl = container.querySelector("#mpChecks");
+    var chosen = {};
+    checkItems.forEach(function(label){
+      var btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.textContent = label;
+      btn.addEventListener("click", function(){
+        chosen[label] = !chosen[label];
+        btn.classList.toggle("selected", chosen[label]);
+        btn.classList.remove("correct", "incorrect", "missing");
+      });
+      checksEl.appendChild(btn);
+    });
+    var recorded = false;
+    container.querySelector("#mpCheck").addEventListener("click", function(){
+      var result = container.querySelector("#mpResult");
+      if (inputs.some(function(inp){ return !inp.value.trim(); })){
+        result.innerHTML = '<div class="feedback-banner bad">Omple tots els camps de la fitxa abans de comprovar.</div>';
+        return;
+      }
+      var wrong = 0;
+      item.fields.forEach(function(f, i){
+        var ok = answerMatches(inputs[i].value, f.answers);
+        inputs[i].parentNode.classList.toggle("ok", ok);
+        inputs[i].parentNode.classList.toggle("bad", !ok);
+        if (!ok) wrong++;
+      });
+      checksEl.querySelectorAll("button").forEach(function(b){
+        var should = item.checkCorrect.indexOf(b.textContent) !== -1, sel = !!chosen[b.textContent];
+        b.classList.remove("correct", "incorrect", "missing");
+        if (sel && should) b.classList.add("correct");
+        else if (sel) { b.classList.add("incorrect"); wrong++; }
+        else if (should) { b.classList.add("missing"); wrong++; }
+      });
+      if (!recorded){ recorded = true; recordActivity("missioLectura", wrong === 0); }
+      if (!wrong){
+        result.innerHTML = '<div class="feedback-banner ok">🎉 Missió complerta! Has fet servir el document per resoldre una tasca de veritat.</div>';
+        return;
+      }
+      result.innerHTML =
+        '<div class="feedback-banner bad">Hi ha ' + wrong + (wrong === 1 ? " cosa" : " coses") + ' per revisar (en vermell). Torna a llegir el document i corregeix-les.</div>' +
+        '<div class="reader-toolbar" style="margin-top:10px;"><button class="ghost-btn" id="mpSolve">Mostra les solucions</button></div>';
+      container.querySelector("#mpSolve").addEventListener("click", function(){
+        result.innerHTML = '<div class="feedback-banner bad"><b>Solucions:</b><br>' +
+          item.fields.map(function(f){ return f.label + ": <b>" + f.answers[0] + "</b>"; }).join("<br>") +
+          "<br>" + item.checkQ + " <b>" + item.checkCorrect.join(", ") + "</b></div>";
+      });
+    });
+    container.querySelector("#mpNext").addEventListener("click", function(){ renderMissioPractica(container); });
   }
-  function buildVocabDoor(){
-    var item = pickRandom(SYNANT_ITEMS);
-    var opts = [item.correct].concat(item.distractors).sort(function(){ return Math.random() - 0.5; });
-    return { category:"Vocabulari", prompt:"Quin és el " + item.relation + " de «" + item.word + "»?", options:opts, correct:item.correct, explain:"El " + item.relation + " de «" + item.word + "» és «" + item.correct + "»." };
-  }
-  function buildComprensioDoor(){
-    var item = pickRandom(MAIN_IDEA_ITEMS);
-    var opts = [item.correct].concat(item.distractors).sort(function(){ return Math.random() - 0.5; });
-    return { category:"Comprensió", prompt:"Quina és la idea principal d'aquest text? «" + item.text + "»", options:opts, correct:item.correct, explain:"La idea principal és: «" + item.correct + "»." };
-  }
-  function buildDescoDoor(){
-    var item = pickRandom(WORD_OR_PSEUDO_ITEMS);
-    return { category:"Descodificació", prompt:"«" + item.text + "» és una paraula real o inventada?", options:["Real","Inventada"], correct: item.real ? "Real" : "Inventada", explain: "«" + item.text + "» " + (item.real ? "és una paraula real." : "és una pseudoparaula (inventada).") };
-  }
-  var ESCAPE_DOOR_BUILDERS = [buildSpellingDoor, buildVocabDoor, buildComprensioDoor, buildDescoDoor];
 
+  /* ---- Escape room: investigar la sala, resoldre proves de lectura i obrir el cadenat ---- */
+  var lastEscapeRoom = null;
   function renderEscapeRoom(container){
-    var doors = ESCAPE_DOOR_BUILDERS.map(function(fn){ return fn(); });
-    renderEscapeDoor(container, doors, 0);
+    var room = pickRandom(ESCAPE_ROOMS, function(r){ return r === lastEscapeRoom; });
+    lastEscapeRoom = room;
+    renderEscapeScene(container, { room: room, found: [], lockTries: 0 });
   }
-  function renderEscapeDoor(container, doors, index){
-    if (index >= doors.length){
-      recordActivity("escapeRoom", true);
-      container.innerHTML =
-        '<p class="section-hint">Has superat totes les portes!</p>' +
-        '<div class="feedback-banner ok">🎉 Escape room superat! Has demostrat el que saps d\'ortografia, vocabulari, comprensió i descodificació.</div>' +
-        '<div><button class="ghost-btn" id="erRestart">Torna a jugar</button></div>';
-      container.querySelector("#erRestart").addEventListener("click", function(){ renderEscapeRoom(container); });
+  function splitObject(name){
+    var sp = name.indexOf(" ");
+    if (sp > 0 && !/[a-zàèéíïòóúüç]/i.test(name.charAt(0))) return { icon: name.slice(0, sp), name: name.slice(sp + 1) };
+    return { icon: "🔎", name: name };
+  }
+  function escapeInventoryHTML(state){
+    if (!state.found.length) return '<span class="ei-empty">Encara no has trobat cap pista.</span>';
+    return state.found.map(function(i){
+      var p = state.room.puzzles[i];
+      return '<span class="ei-piece">' + splitObject(p.object).icon + " <b>" + p.piece + "</b></span>";
+    }).join("");
+  }
+  function renderEscapeScene(container, state){
+    var room = state.room;
+    container.innerHTML =
+      '<p class="section-hint">🔐 ' + room.title + '</p>' +
+      '<div class="mission-brief">' + room.story + '</div>' +
+      '<div class="escape-scene" id="erScene"></div>' +
+      '<div class="escape-inventory"><b>🎒 Pistes trobades (' + state.found.length + ' de ' + room.puzzles.length + '):</b> ' + escapeInventoryHTML(state) + '</div>' +
+      '<div class="reader-toolbar"><button class="ghost-btn" id="erLock">🔒 Obre la porta</button><button class="ghost-btn" id="erNew">Una altra sala</button></div>' +
+      '<div id="erResult"></div>';
+    var scene = container.querySelector("#erScene");
+    room.puzzles.forEach(function(p, i){
+      var o = splitObject(p.object);
+      var solved = state.found.indexOf(i) !== -1;
+      var btn = document.createElement("button");
+      btn.className = "escape-object" + (solved ? " solved" : "");
+      btn.disabled = solved;
+      btn.innerHTML = '<span class="eo-icon">' + o.icon + '</span><span class="eo-name">' + o.name + '</span>' +
+        (solved ? '<span class="eo-piece">✓ ' + p.piece + '</span>' : '<span class="eo-hint">Investiga</span>');
+      btn.addEventListener("click", function(){ renderEscapePuzzle(container, state, i); });
+      scene.appendChild(btn);
+    });
+    container.querySelector("#erLock").addEventListener("click", function(){
+      if (state.found.length < room.puzzles.length){
+        container.querySelector("#erResult").innerHTML = '<div class="feedback-banner bad">El cadenat no s\'obre: encara et falten ' + (room.puzzles.length - state.found.length) + ' pistes. Investiga els objectes.</div>';
+        return;
+      }
+      renderEscapeLock(container, state);
+    });
+    container.querySelector("#erNew").addEventListener("click", function(){ renderEscapeRoom(container); });
+  }
+  function renderEscapePuzzle(container, state, index){
+    var p = state.room.puzzles[index];
+    var o = splitObject(p.object);
+    container.innerHTML =
+      '<div><button class="ghost-btn" id="erBack">‹ Torna a la sala</button></div>' +
+      '<div class="escape-clue"><p class="ec-object">' + o.icon + " " + o.name + '</p><div class="reading-text adaptive-text ec-text" id="erText"></div></div>' +
+      '<div class="reader-toolbar"><button class="play-btn" id="erPlay">▶ Escolta la pista</button></div>' +
+      '<p class="section-hint" style="margin-top:6px;">' + p.question + '</p>' +
+      (p.kind === "errors" ? "" :
+        '<input class="field" id="erAnswer" type="text" autocomplete="off" placeholder="Escriu la resposta…">' +
+        '<div class="reader-toolbar"><button class="ghost-btn" id="erCheck">Comprova</button></div>') +
+      '<div id="erResult"></div>';
+    var textEl = container.querySelector("#erText");
+    container.querySelector("#erBack").addEventListener("click", function(){ renderEscapeScene(container, state); });
+    container.querySelector("#erPlay").addEventListener("click", function(){ speak(p.text.replace(/\n/g, ". "), {}); });
+    var recorded = false;
+    function solved(firstTry){
+      if (!recorded){ recorded = true; recordActivity("escapeRoom", firstTry); }
+      if (window.LletraSfx) window.LletraSfx.play("pickup");
+      state.found.push(index);
+      container.querySelector("#erResult").innerHTML =
+        '<div class="feedback-banner ok">🔑 Molt bé! Has trobat una peça del codi: <b class="er-piece">' + p.piece + '</b></div>' +
+        '<div class="reader-toolbar" style="margin-top:10px;"><button class="ghost-btn" id="erBack2">‹ Torna a la sala</button></div>';
+      container.querySelector("#erBack2").addEventListener("click", function(){ renderEscapeScene(container, state); });
+    }
+    if (p.kind === "errors"){
+      // Cal tocar totes les paraules mal escrites; un toc equivocat fa que ja no sigui a la primera.
+      var targets = p.answers.map(function(w){ return w.toLowerCase(); }), hits = [], misses = 0;
+      p.text.split(/\n/).forEach(function(line, li){
+        if (li) textEl.appendChild(document.createElement("br"));
+        line.split(/\s+/).forEach(function(tok){
+          if (!tok) return;
+          var clean = tok.replace(/[.,;:!¡¿?"«»“”…()]/g, "").toLowerCase().replace(/’/g, "'");
+          var hit = targets.indexOf(clean) !== -1 ? clean : targets.indexOf(clean.split("'").pop()) !== -1 ? clean.split("'").pop() : null;
+          var span = document.createElement("span");
+          span.className = "er-word";
+          span.textContent = tok;
+          span.addEventListener("click", function(){
+            if (span.dataset.done || state.found.indexOf(index) !== -1) return;
+            span.dataset.done = "1";
+            if (hit && hits.indexOf(hit) === -1){
+              span.classList.add("match");
+              hits.push(hit);
+              if (hits.length === targets.length) solved(misses === 0);
+            } else {
+              span.classList.add("miss");
+              misses++;
+              container.querySelector("#erResult").innerHTML = '<div class="feedback-banner bad">Aquesta paraula està ben escrita. Llegeix a poc a poc i busca-ne una altra.</div>';
+            }
+          });
+          textEl.appendChild(span);
+          textEl.appendChild(document.createTextNode(" "));
+        });
+      });
       return;
     }
-    var door = doors[index];
-    container.innerHTML =
-      '<p class="section-hint">Porta ' + (index + 1) + ' de ' + doors.length + ' — ' + door.category + '</p>' +
-      '<p class="prompt-word adaptive-text" style="font-size:20px;">' + door.prompt + '</p>' +
-      '<div class="choice-row" id="erChoices"></div>' +
-      '<div id="erFeedback"></div>';
-    var row = container.querySelector("#erChoices");
-    door.options.forEach(function(w){
-      var btn = document.createElement("button");
-      btn.className = "choice-btn";
-      btn.textContent = w;
-      btn.addEventListener("click", function(){
-        var ok = w === door.correct;
-        recordActivity("escapeRoom", ok);
-        if (ok){
-          row.querySelectorAll("button").forEach(function(b){ b.disabled = true; });
-          btn.classList.add("correct");
-          container.querySelector("#erFeedback").innerHTML =
-            '<div class="feedback-banner ok">Porta oberta! ' + door.explain + '</div>' +
-            '<div class="reader-toolbar" style="margin-top:10px;"><button class="ghost-btn" id="erNextDoor">Següent porta</button></div>';
-          container.querySelector("#erNextDoor").addEventListener("click", function(){ renderEscapeDoor(container, doors, index + 1); });
-        } else {
-          btn.disabled = true;
-          btn.classList.add("incorrect");
-          container.querySelector("#erFeedback").innerHTML =
-            '<div class="feedback-banner bad">Aquesta clau no encaixa. Torna-ho a provar.</div>';
-        }
-      });
-      row.appendChild(btn);
+    p.text.split(/\n/).forEach(function(line){
+      var div = document.createElement("div");
+      div.textContent = line;
+      textEl.appendChild(div);
+    });
+    var wrongTries = 0;
+    container.querySelector("#erCheck").addEventListener("click", function(){
+      var input = container.querySelector("#erAnswer");
+      if (state.found.indexOf(index) !== -1) return;
+      if (!input.value.trim()){ emptyWarning(container.querySelector("#erResult")); return; }
+      if (answerMatches(input.value, p.answers)){ input.disabled = true; solved(wrongTries === 0); return; }
+      wrongTries++;
+      if (!recorded){ recorded = true; recordActivity("escapeRoom", false); }
+      container.querySelector("#erResult").innerHTML = '<div class="feedback-banner bad">No és correcte. Torna a llegir la pista amb calma' + (wrongTries > 1 ? " (pots escoltar-la amb el botó ▶)" : "") + '.</div>';
     });
   }
+  function renderEscapeLock(container, state){
+    var room = state.room;
+    container.innerHTML =
+      '<div><button class="ghost-btn" id="erBack">‹ Torna a la sala</button></div>' +
+      '<div class="escape-note adaptive-text">📌 ' + room.lockHint + '</div>' +
+      '<div class="escape-inventory"><b>🎒 Les teves pistes:</b> ' + escapeInventoryHTML(state) + '</div>' +
+      '<p class="section-hint" style="margin-top:6px;">Escriu el codi en l\'ordre que diu la nota:</p>' +
+      '<div class="reader-toolbar"><input class="field escape-code" id="erCode" type="text" autocomplete="off" maxlength="' + room.code.length + '" placeholder="' + new Array(room.code.length + 1).join("·") + '">' +
+      '<button class="ghost-btn" id="erOpen">🔓 Obre</button></div>' +
+      '<div id="erResult"></div>';
+    container.querySelector("#erBack").addEventListener("click", function(){ renderEscapeScene(container, state); });
+    container.querySelector("#erOpen").addEventListener("click", function(){
+      var typed = container.querySelector("#erCode").value;
+      if (!typed.trim()){ emptyWarning(container.querySelector("#erResult")); return; }
+      var ok = plainText(typed) === plainText(room.code);
+      state.lockTries++;
+      if (state.lockTries === 1) recordActivity("escapeRoom", ok);
+      if (!ok){
+        container.querySelector("#erResult").innerHTML = '<div class="feedback-banner bad">🔒 El cadenat no s\'obre. Torna a llegir la nota: en quin ordre van les pistes?</div>';
+        return;
+      }
+      if (window.LletraSfx) window.LletraSfx.play("unlock");
+      container.innerHTML =
+        '<div class="escape-win"><div class="ew-icon">🔓</div><p class="ew-title">Has sortit de: ' + room.title + '!</p>' +
+        '<p>Codi correcte: <b>' + room.code + '</b>. ' + (state.lockTries === 1 ? "I a la primera!" : "Ho has aconseguit en " + state.lockTries + " intents.") + '</p></div>' +
+        '<div class="reader-toolbar"><button class="ghost-btn" id="erNew">Una altra sala</button></div>';
+      container.querySelector("#erNew").addEventListener("click", function(){ renderEscapeRoom(container); });
+    });
+  }
+
+  /* ---- Segueix les instruccions: llegir indicacions i moure la guineu pel mapa ---- */
+  var TOWN_W = 6, TOWN_H = 5;
+  var TOWN_PLACES = [
+    { x:0, y:0, e:"🏫", n:"l'escola", l:"Escola" }, { x:3, y:0, e:"📚", n:"la biblioteca", l:"Biblioteca" },
+    { x:5, y:0, e:"🏥", n:"l'hospital", l:"Hospital" }, { x:2, y:1, e:"💊", n:"la farmàcia", l:"Farmàcia" },
+    { x:1, y:2, e:"🌳", n:"el parc", l:"Parc" }, { x:4, y:2, e:"🥖", n:"el forn de pa", l:"Forn" },
+    { x:3, y:3, e:"🏊", n:"la piscina", l:"Piscina" }, { x:0, y:4, e:"🏠", n:"casa teva", l:"Casa" },
+    { x:2, y:4, e:"🏪", n:"el supermercat", l:"Súper" }, { x:5, y:4, e:"🚉", n:"l'estació", l:"Estació" }
+  ];
+  var NUM_WORDS = ["zero", "un", "dos", "tres", "quatre", "cinc", "sis"];
+  function placeAt(x, y){
+    for (var i = 0; i < TOWN_PLACES.length; i++){ if (TOWN_PLACES[i].x === x && TOWN_PLACES[i].y === y) return TOWN_PLACES[i]; }
+    return null;
+  }
+  // «de» + article: «del parc», «de l'escola», «de la piscina».
+  function deLloc(p){ return p.n.indexOf("el ") === 0 ? "del " + p.n.slice(3) : "de " + p.n; }
+  function legText(axis, n){
+    var w = NUM_WORDS[Math.abs(n)] + " " + (Math.abs(n) === 1 ? "carrer" : "carrers");
+    if (axis === "x") return "camina " + w + (n > 0 ? " cap a la dreta" : " cap a l'esquerra");
+    return (n > 0 ? "baixa " : "puja ") + w;
+  }
+  // Ruta de dos trams (un horitzontal i un vertical) entre dos llocs del poble.
+  function buildTownRoute(){
+    var a, b;
+    do {
+      a = TOWN_PLACES[Math.floor(Math.random() * TOWN_PLACES.length)];
+      b = TOWN_PLACES[Math.floor(Math.random() * TOWN_PLACES.length)];
+    } while (a === b || a.x === b.x || a.y === b.y);
+    var legs = [{ axis:"x", n:b.x - a.x }, { axis:"y", n:b.y - a.y }];
+    if (Math.random() < 0.5) legs.reverse();
+    var cells = [], x = a.x, y = a.y;
+    legs.forEach(function(leg){
+      for (var k = 0; k < Math.abs(leg.n); k++){
+        if (leg.axis === "x") x += leg.n > 0 ? 1 : -1; else y += leg.n > 0 ? 1 : -1;
+        cells.push(x + "," + y);
+      }
+    });
+    var passing = cells.slice(0, -1).map(function(c){ var xy = c.split(","); return placeAt(+xy[0], +xy[1]); }).filter(Boolean);
+    var text = "Surts " + deLloc(a) + ". Primer, " + legText(legs[0].axis, legs[0].n) + ". Després, " + legText(legs[1].axis, legs[1].n) + ".";
+    if (passing.length) text += " Pel camí passaràs per davant " + passing.map(deLloc).join(" i ") + ".";
+    return { from:a, to:b, text:text, cells:cells };
+  }
+  var townState = null;
+  function renderInstruccions(container){
+    var route = buildTownRoute();
+    townState = { route: route, x: route.from.x, y: route.from.y, trail: [], recorded: false, done: false, container: container };
+    container.innerHTML =
+      '<p class="section-hint">Llegeix les indicacions i mou la guineu pel mapa. Quan creguis que ja hi ets, prem «Hi he arribat!».</p>' +
+      '<div class="mission-brief town-text adaptive-text">🧭 ' + route.text + ' <b>On arribes?</b></div>' +
+      '<div class="reader-toolbar"><button class="play-btn" id="tiPlay">▶ Escolta les indicacions</button></div>' +
+      '<div class="town-map" id="tiMap" style="grid-template-columns:repeat(' + TOWN_W + ',1fr);"></div>' +
+      '<div class="town-pad">' +
+        '<button class="ghost-btn" data-dx="0" data-dy="-1">⬆ Amunt</button>' +
+        '<button class="ghost-btn" data-dx="-1" data-dy="0">⬅ Esquerra</button>' +
+        '<button class="ghost-btn" data-dx="1" data-dy="0">Dreta ➡</button>' +
+        '<button class="ghost-btn" data-dx="0" data-dy="1">⬇ Avall</button>' +
+      '</div>' +
+      '<div class="reader-toolbar"><button class="ghost-btn" id="tiArrive">📍 Hi he arribat!</button><button class="ghost-btn" id="tiReset">↺ Torna a començar</button><button class="ghost-btn" id="tiNext">Nova ruta</button></div>' +
+      '<div id="tiResult"></div>';
+    container.querySelector("#tiPlay").addEventListener("click", function(){ speak(route.text, {}); });
+    container.querySelectorAll(".town-pad button").forEach(function(b){
+      b.addEventListener("click", function(){ moveFox(+b.dataset.dx, +b.dataset.dy); });
+    });
+    container.querySelector("#tiReset").addEventListener("click", function(){
+      if (townState.done) return;
+      townState.x = route.from.x; townState.y = route.from.y; townState.trail = [];
+      container.querySelector("#tiResult").innerHTML = "";
+      drawTown();
+    });
+    container.querySelector("#tiArrive").addEventListener("click", function(){
+      if (townState.done) return;
+      var ok = townState.x === route.to.x && townState.y === route.to.y;
+      if (!townState.recorded){ townState.recorded = true; recordActivity("instruccions", ok); }
+      var here = placeAt(townState.x, townState.y);
+      if (ok){
+        townState.done = true;
+        container.querySelector("#tiResult").innerHTML = '<div class="feedback-banner ok">🎉 Molt bé! Has arribat a ' + route.to.e + " " + route.to.n + '.</div>';
+      } else {
+        container.querySelector("#tiResult").innerHTML = '<div class="feedback-banner bad">' + (here ? "Ets a " + here.e + " " + here.n + ", però no és aquí." : "Aquí no hi ha cap lloc.") +
+          ' Torna a llegir les indicacions pas a pas (pots prémer «Torna a començar»).</div>' +
+          '<div class="reader-toolbar" style="margin-top:10px;"><button class="ghost-btn" id="tiShow">Mostra el camí</button></div>';
+        container.querySelector("#tiShow").addEventListener("click", function(){
+          townState.done = true; townState.showRoute = true; drawTown();
+          container.querySelector("#tiResult").innerHTML = '<div class="feedback-banner bad">El camí correcte (en groc) porta a ' + route.to.e + " " + route.to.n + '.</div>';
+        });
+      }
+      drawTown();
+    });
+    container.querySelector("#tiNext").addEventListener("click", function(){ renderInstruccions(container); });
+    drawTown();
+  }
+  function moveFox(dx, dy){
+    var st = townState;
+    if (!st || st.done) return;
+    var nx = st.x + dx, ny = st.y + dy;
+    if (nx < 0 || ny < 0 || nx >= TOWN_W || ny >= TOWN_H) return;
+    st.trail.push(st.x + "," + st.y);
+    st.x = nx; st.y = ny;
+    if (window.LletraSfx) window.LletraSfx.play("step");
+    st.container.querySelector("#tiResult").innerHTML = "";
+    drawTown();
+  }
+  function drawTown(){
+    var st = townState, map = st.container.querySelector("#tiMap");
+    map.innerHTML = "";
+    for (var y = 0; y < TOWN_H; y++){
+      for (var x = 0; x < TOWN_W; x++){
+        var key = x + "," + y, place = placeAt(x, y);
+        var cell = document.createElement("div");
+        cell.className = "town-cell" + (place ? " place" : "") + (st.trail.indexOf(key) !== -1 ? " trail" : "") +
+          (st.showRoute && st.route.cells.indexOf(key) !== -1 ? " route" : "") + (st.done && !st.showRoute && st.x === x && st.y === y ? " goal" : "");
+        if (place) cell.innerHTML = '<span class="tc-icon">' + place.e + '</span><span class="tc-name">' + place.l + "</span>";
+        if (st.x === x && st.y === y) cell.innerHTML += '<img class="town-fox" src="img/guineu-hola.png" alt="Guineu">';
+        map.appendChild(cell);
+      }
+    }
+  }
+  document.addEventListener("keydown", function(e){
+    if (!townState || !townState.container.querySelector("#tiMap") || !townState.container.offsetParent) return;
+    if (/input|textarea|select/i.test(e.target.tagName)) return;
+    var d = { ArrowUp:[0, -1], ArrowDown:[0, 1], ArrowLeft:[-1, 0], ArrowRight:[1, 0] }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    moveFox(d[0], d[1]);
+  });
 
   var MISSIONS_ACTIVITIES = [
-    { id:"missio-lectura", name:"Missió de lectura", desc:"Llegeix un text amb una finalitat concreta: trobar una dada, resoldre un problema…", render: renderMissioDeLectura },
-    { id:"escape-room", name:"Escape room textual", desc:"Supera petites proves de lectura i ortografia per avançar.", render: renderEscapeRoom }
+    { id:"missio-lectura", name:"Missió pràctica", desc:"Llegeix un document real (cartell, horari, recepta…) i fes-lo servir: omple la fitxa i prepara-ho tot.", render: renderMissioPractica },
+    { id:"escape-room", name:"Escape room", desc:"Investiga els objectes de la sala, resol les proves de lectura i troba el codi per sortir.", render: renderEscapeRoom },
+    { id:"instruccions", name:"Segueix les instruccions", desc:"Llegeix les indicacions i mou la guineu pel mapa del poble fins on et porten.", render: renderInstruccions }
   ];
   var missionsGrid = document.getElementById("grid-missions");
   var missionsDetail = document.getElementById("missions-detail");
@@ -2762,7 +3033,7 @@
       prediccio:{a:0,c:0}, preguntaDurant:{a:0,c:0}, ideaPrincipal:{a:0,c:0}, ordenaHistoria:{a:0,c:0},
       quePodemDeduir:{a:0,c:0}, evidenciaTextual:{a:0,c:0}, informacioImportant:{a:0,c:0},
       construeixResum:{a:0,c:0}, respostaOral:{a:0,c:0},
-      missioLectura:{a:0,c:0}, escapeRoom:{a:0,c:0}
+      missioLectura:{a:0,c:0}, escapeRoom:{a:0,c:0}, instruccions:{a:0,c:0}
     } };
     saveProgress(); renderProgress();
     if (Game) Game.render();
@@ -2915,7 +3186,7 @@
     { tab:"panel-dictation", icon:"ortografia", name:"Ortografia", desc:"Dictats i patrons." },
     { tab:"panel-vocabulari", icon:"vocabulari", name:"Vocabulari", desc:"Paraules noves i famílies." },
     { tab:"panel-comprensio", icon:"comprensio", name:"Comprensió", desc:"Entén i resumeix textos." },
-    { tab:"panel-missions", icon:"missions", name:"Missions", desc:"Reptes i escape room." },
+    { tab:"panel-missions", icon:"missions", name:"Missions", desc:"Missions reals i escape room." },
     { tab:"panel-progress", icon:"progres", name:"Progrés", desc:"Assoliments i informes." }
   ];
   function goTab(target){

@@ -52,7 +52,7 @@ Cada secció mostra d'entrada la llista de les seves activitats (a Lectura, el l
 
 Estil pastel i juganer per a infants i joves: cada secció té el seu color, els botons tenen relleu, els títols fan servir *Fredoka* i el logotip té les lletres de colors. La mascota és una guineu (`img/guineu-hola.png`, `img/guineu-estrella.png`, generades amb Canva i amb fons transparent), que surt a la portada, a l'Inici, a l'ajuda i a les celebracions. El text de lectura continua amb Lexend o Atkinson Hyperlegible sobre fons llis. Hi ha tema clar i fosc.
 
-Els errors del repàs espaiat es presenten com a **monstres d'errors** que «volen tornar a jugar», sense to de penalització. Quan se n'atrapa un, es celebra. Per fer l'eina més engrescadora («juice»), cada encert fa sonar una campaneta i un esclat petit d'estrelles, i les pantalles entren amb transicions suaus. Tot respecta «reduir moviment» i el so es pot treure als ajustos.
+Els errors del repàs espaiat es presenten com a **monstres d'errors** que «volen tornar a jugar», sense to de penalització. Quan se n'atrapa un, es celebra. Per fer l'eina més engrescadora («juice»), cada encert fa sonar una campana i un esclat petit d'estrelles, i les pantalles entren amb transicions suaus. Els efectes sonors (`js/sfx.js`) se sintetitzen amb Web Audio (campanes FM, marimba i reverberació), sense fitxers d'àudio: encert, error suau, ratxa, insígnia, fanfàrria de nivell, obrir activitats, passos al mapa i el cadenat de l'escape room. Tot respecta «reduir moviment» i el so es pot treure als ajustos.
 
 ## Contingut: exemples i bancs
 
@@ -79,7 +79,7 @@ Ordre d'aplicació: `contingut.json` publicat → adreça web → paquet del dis
 - **Avatars**: 12 d'inicials i 6 que es desbloquegen pujant de nivell.
 - **Estrelles** (★★★) a cada targeta d'activitat segons el domini, i «✨ Nova» a les no provades.
 
-Es veu a la capçalera (nivell, ratxa i objectiu; obre els assoliments) i a la targeta *Els teus assoliments* de *Progrés*. Les celebracions respecten «reduir moviment» i el so no sona mentre parla la veu. Als *Ajustos de lectura* es pot amagar tot (les dades es continuen desant) i treure el so. L'estat es desa a `progress.game` de cada perfil, de manera que es sincronitza amb el núvol; els perfils anteriors reben d'entrada els punts i les insígnies que corresponen a l'activitat que ja havien fet.
+Es veu a la capçalera (nivell, ratxa i objectiu; obre els assoliments) i a la targeta *Els teus assoliments* de *Progrés*. Les celebracions respecten «reduir moviment». Als *Ajustos de lectura* es pot amagar tot (les dades es continuen desant) i treure el so. L'estat es desa a `progress.game` de cada perfil, de manera que es sincronitza amb el núvol; els perfils anteriors reben d'entrada els punts i les insígnies que corresponen a l'activitat que ja havien fet.
 
 ## Informes de treball
 
@@ -140,3 +140,13 @@ El pla d'acció de monetització és un document intern i no es publica en aques
 - [ ] Política de privacitat i avís legal (enllaçats des del panell de compte).
 - [ ] **Fase 3** — Subscripcions amb Stripe (o Paddle) i contingut premium servit des del backend.
 - [ ] **Fase 4** — Pilot, pàgina per a centres i llicències B2B.
+
+## Missions
+
+Activitats on es llegeix per fer alguna cosa:
+
+- **Missió pràctica**: un document real (cartell d'excursió, recepta, horari de trens, cartellera, preus d'una botiga, fitxa de cures) i una situació. L'alumne omple una fitxa amb dades del document, algunes calculades o deduïdes, i marca una llista de comprovació. Les respostes no tenen en compte accents, majúscules ni puntuació, i els números es comparen per les xifres.
+- **Escape room**: una sala amb objectes per investigar. Cada objecte amaga una prova de lectura (respondre a partir d'una nota, trobar les paraules mal escrites, llegir un acròstic) que dona una peça del codi. La nota del cadenat diu en quin ordre van les peces.
+- **Segueix les instruccions**: un mapa del poble amb la guineu. Les rutes es generen soles («camina tres carrers cap a la dreta, després baixa dos») i l'alumne mou la guineu amb els botons o les fletxes del teclat fins on creu que porten.
+
+Les missions (`MISSION_ITEMS`) i les sales (`ESCAPE_ROOMS`) es poden ampliar amb l'editor de contingut.

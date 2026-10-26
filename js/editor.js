@@ -29,7 +29,7 @@
       fields:[ {k:"w", t:"text", l:"Paraula"}, {k:"n", t:"number", l:"Nombre de síl·labes"} ] },
     RHYME_GROUPS: { group:"Descodificació", label:"Grups de rimes", act:"Rimes", item:"strings",
       itemHelp:"La primera paraula és la que es pregunta; les altres (mínim dues) són les que hi rimen. Una per línia." },
-    WORD_OR_PSEUDO_ITEMS: { group:"Descodificació", label:"Paraules i pseudoparaules", act:"Paraula o pseudoparaula, Escape room",
+    WORD_OR_PSEUDO_ITEMS: { group:"Descodificació", label:"Paraules i pseudoparaules", act:"Paraula o pseudoparaula",
       fields:[ {k:"text", t:"text", l:"Paraula"}, {k:"real", t:"bool", l:"És una paraula real", h:"Desmarca-ho si és una paraula inventada."} ] },
     ORDENA_SYLLABLE_WORDS: { group:"Descodificació", label:"Paraules per ordenar síl·labes", act:"Ordena síl·labes",
       fields:[ {k:"word", t:"text", l:"Paraula"}, {k:"syll", t:"list", l:"Síl·labes en ordre", h:"Una per línia. Juntes han de formar la paraula."} ] },
@@ -42,7 +42,7 @@
 
     SENTENCES: { group:"Ortografia", label:"Frases de dictat", act:"Dictat interactiu", item:"long" },
     SPELLING_WORDS: { group:"Ortografia", label:"Paraules per memoritzar", act:"Memòria ortogràfica", item:"text" },
-    SPELLING_PATTERNS: { group:"Ortografia", label:"Patrons ortogràfics", act:"Caça de patrons, Tria la grafia, Escape room",
+    SPELLING_PATTERNS: { group:"Ortografia", label:"Patrons ortogràfics", act:"Caça de patrons, Tria la grafia",
       fields:[ {k:"id", t:"autoid"}, {k:"label", t:"text", l:"Nom del patró", h:"Per exemple: b / v."}, {k:"hint", t:"long", l:"Explicació de la norma"},
         {k:"words", t:"objects", l:"Parelles de paraules (mínim 5)", add:"Afegeix una parella",
           fields:[ {k:"correct", t:"text", l:"Forma correcta"}, {k:"wrong", t:"text", l:"Forma incorrecta"} ] } ] },
@@ -118,10 +118,26 @@
         {k:"keywords", t:"list", l:"Paraules clau de la resposta", h:"Una per línia. N'hi ha prou que la resposta en contingui una; pots posar només l'inici (p. ex. «endre» per a endreçar/endrecen)."},
         {k:"model", t:"text", l:"Resposta model"} ] },
 
-    MISSION_ITEMS: { group:"Missions", label:"Missions de lectura", act:"Missió de lectura",
-      fields:[ {k:"title", t:"text", l:"Títol", h:"Per exemple: Missió: organitza la sortida."}, {k:"text", t:"long", l:"Text"},
-        {k:"questions", t:"objects", l:"Preguntes", add:"Afegeix una pregunta",
-          fields:[ {k:"q", t:"text", l:"Pregunta"}, {k:"options", t:"list", l:"Opcions", h:"Una per línia."}, {k:"correct", t:"text", l:"Resposta correcta", h:CORRECT_IN_OPTIONS} ] } ] }
+    MISSION_ITEMS: { group:"Missions", label:"Missions pràctiques", act:"Missió pràctica",
+      fields:[ {k:"title", t:"text", l:"Títol", h:"Per exemple: Inscriu-te a l'excursió."},
+        {k:"intro", t:"long", l:"Situació", h:"Què ha de fer l'alumne i per què."},
+        {k:"doc", t:"long", l:"Document", h:"Cartell, horari, recepta… La primera línia és el títol; cada línia es mostra separada."},
+        {k:"fields", t:"objects", l:"Camps de la fitxa", add:"Afegeix un camp",
+          fields:[ {k:"label", t:"text", l:"Què cal escriure"}, {k:"answers", t:"list", l:"Respostes acceptades", h:"Una per línia. No compten els accents, les majúscules ni la puntuació; si és un número, només les xifres."} ] },
+        {k:"checkQ", t:"text", l:"Pregunta de la llista", h:"Per exemple: Què has de posar a la motxilla?"},
+        {k:"checkItems", t:"list", l:"Elements de la llista", h:"Un per línia."},
+        {k:"checkCorrect", t:"list", l:"Elements que cal marcar", h:"Un per línia, escrits igual que a la llista."} ] },
+    ESCAPE_ROOMS: { group:"Missions", label:"Sales d'escape room", act:"Escape room",
+      fields:[ {k:"title", t:"text", l:"Nom de la sala"}, {k:"story", t:"long", l:"Història inicial"},
+        {k:"lockHint", t:"long", l:"Nota del cadenat", h:"Ha de dir en quin ordre van les peces, citant els objectes."},
+        {k:"code", t:"text", l:"Codi del cadenat", h:"Les peces de les proves, en l'ordre de la nota."},
+        {k:"puzzles", t:"objects", l:"Objectes i proves", add:"Afegeix un objecte",
+          fields:[ {k:"object", t:"text", l:"Objecte", h:"Amb un emoji davant. Per exemple: 📕 Llibre vermell."},
+            {k:"kind", t:"choice", l:"Tipus de prova", options:["pregunta", "errors"]},
+            {k:"text", t:"long", l:"Text de la pista"},
+            {k:"question", t:"text", l:"Consigna", h:"Per exemple: Quants animals surten a la frase?"},
+            {k:"answers", t:"list", l:"Respostes", h:"Pregunta: respostes acceptades. Errors: les paraules mal escrites, tal com surten al text."},
+            {k:"piece", t:"text", l:"Peça del codi que dona"} ] } ] }
   };
   var GROUP_ORDER = ["Lectura", "Descodificació", "Fonologia", "Ortografia", "Vocabulari", "Comprensió", "Missions"];
 

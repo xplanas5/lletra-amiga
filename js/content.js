@@ -96,8 +96,21 @@
     EVIDENCE_ITEMS: function(it){ return it.evidenceIndex >= 0 && it.evidenceIndex < it.sentences.length ? null : "La frase que respon ha de ser una de les frases."; },
     KEY_INFO_ITEMS: function(it){ return it.keyIndex >= 0 && it.keyIndex < it.sentences.length ? null : "La frase clau ha de ser una de les frases."; },
     MISSION_ITEMS: function(it){
-      var bad = it.questions.filter(function(q){ return !inList(q.options, q.correct); });
-      return bad.length ? "A cada pregunta, la resposta correcta ha de ser una de les opcions." : null;
+      var bad = it.checkCorrect.filter(function(c){ return !inList(it.checkItems, c); });
+      return bad.length ? "Els elements que cal marcar han de ser a la llista: " + bad.join(", ") + "." : null;
+    },
+    ESCAPE_ROOMS: function(it){
+      if (it.puzzles.length < 2) return "Cal almenys dos objectes amb prova.";
+      for (var i = 0; i < it.puzzles.length; i++){
+        var p = it.puzzles[i];
+        if (p.kind !== "pregunta" && p.kind !== "errors") return "El tipus de prova ha de ser «pregunta» o «errors».";
+        if (it.code.toLowerCase().indexOf(p.piece.toLowerCase()) === -1) return "La peça «" + p.piece + "» no surt al codi del cadenat.";
+        if (p.kind === "errors"){
+          var miss = p.answers.filter(function(w){ return !hasWord(p.text, w); });
+          if (miss.length) return "Aquestes paraules no surten al text de la pista: " + miss.join(", ") + ".";
+        }
+      }
+      return null;
     },
     SUMMARY_ITEMS: function(it){ return it.sentences.some(function(s){ return s.essential; }) ? null : "Marca almenys una frase com a essencial."; }
   };
