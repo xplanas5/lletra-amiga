@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lletra Amiga</title>
   <meta name="description" content="Eina d'entrenament lector i ortogràfic per a persones amb dislèxia: lectura adaptada, exercicis i seguiment de progrés." />
+  <meta name="theme-color" content="#F4F0FF">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&family=Lexend:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -14,34 +15,21 @@
 <div class="cover" id="cover" role="dialog" aria-labelledby="coverTitle" hidden>
   <div class="cover-inner">
     <div class="cover-head">
-      <div class="brand-mark" aria-hidden="true">Ll</div>
-      <h1 id="coverTitle">Lletra Amiga</h1>
-      <p class="cover-lead">Entrenament lector i ortogràfic pensat per a persones amb dislèxia. Tria per on vols començar:</p>
+      <div class="cover-hero" aria-hidden="true">
+        <img class="cover-mascot" src="img/guineu-hola.png" alt="" width="200" height="200">
+        <span class="speech">Hola!</span>
+      </div>
+      <h1 id="coverTitle"><span class="sr-only">Lletra Amiga</span><span class="wordmark" aria-hidden="true"><span class="wm-word"><span class="wm1">L</span><span class="wm2">l</span><span class="wm3">e</span><span class="wm4">t</span><span class="wm5">r</span><span class="wm6">a</span></span> <span class="wm-word"><span class="wm1">A</span><span class="wm2">m</span><span class="wm3">i</span><span class="wm4">g</span><span class="wm5">a</span></span></span></h1>
+      <p class="cover-lead">Entrenament lector i ortogràfic pensat per a persones amb dislèxia</p>
     </div>
 
-    <div class="cover-game game-only" id="coverGame"></div>
-
-    <div class="cover-grid">
-      <button class="cover-card" data-go="panel-reader"><span class="cover-icon" aria-hidden="true">📖</span><span class="name">Lectura</span><span class="desc">Lector adaptat amb veu, lectura guiada i fluïdesa.</span></button>
-      <button class="cover-card" data-go="panel-fonologia"><span class="cover-icon" aria-hidden="true">👂</span><span class="name">Fonologia</span><span class="desc">Escoltar, separar i canviar els sons de les paraules.</span></button>
-      <button class="cover-card" data-go="panel-exercises"><span class="cover-icon" aria-hidden="true">🔤</span><span class="name">Descodificació</span><span class="desc">Lletres que es confonen, síl·labes i rimes.</span></button>
-      <button class="cover-card" data-go="panel-dictation"><span class="cover-icon" aria-hidden="true">✏️</span><span class="name">Ortografia</span><span class="desc">Dictats, patrons i errors per detectar.</span></button>
-      <button class="cover-card" data-go="panel-vocabulari"><span class="cover-icon" aria-hidden="true">💬</span><span class="name">Vocabulari</span><span class="desc">Famílies, sinònims, prefixos i paraules noves.</span></button>
-      <button class="cover-card" data-go="panel-comprensio"><span class="cover-icon" aria-hidden="true">🧠</span><span class="name">Comprensió</span><span class="desc">Idea principal, inferències i resums.</span></button>
-      <button class="cover-card" data-go="panel-missions"><span class="cover-icon" aria-hidden="true">🎯</span><span class="name">Missions</span><span class="desc">Reptes de lectura i un escape room.</span></button>
-      <button class="cover-card" data-go="panel-progress"><span class="cover-icon" aria-hidden="true">📈</span><span class="name">Progrés</span><span class="desc">Nivell per àrees, repàs i informes de treball.</span></button>
-    </div>
-
-    <ul class="cover-tools">
-      <li><span aria-hidden="true">👤</span> <b>Perfils</b>: cada persona té el seu progrés.</li>
-      <li><span aria-hidden="true">⚙</span> <b>Ajustos</b>: lletra, espaiat, colors i veu.</li>
-      <li><span aria-hidden="true">📄</span> <b>Informes</b>: per imprimir, desar en PDF o en CSV.</li>
-      <li><span aria-hidden="true">✎</span> <b>Editor</b>: afegeix exemples propis a les activitats.</li>
-    </ul>
-
-    <div class="cover-actions">
-      <button class="play-btn" id="coverStart">Comença</button>
-      <label class="check-row"><input type="checkbox" id="coverSkip"> <span>No mostris la portada en obrir l'app</span></label>
+    <div class="cover-profiles">
+      <p class="cover-question" id="coverQuestion">Qui practica avui?</p>
+      <div class="cover-profile-list" id="coverProfiles" role="group" aria-labelledby="coverQuestion"></div>
+      <div class="cover-new">
+        <input class="field" id="coverNewName" placeholder="Nom del nou perfil…" aria-label="Nom del nou perfil" maxlength="40">
+        <button class="ghost-btn" id="coverAddProfile">Afegeix perfil</button>
+      </div>
     </div>
   </div>
 </div>
@@ -49,14 +37,15 @@
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <button class="brand-mark brand-home" id="openCover" title="Portada" aria-label="Mostra la portada">Ll</button>
+      <button class="brand-mark brand-home" id="openCover" title="Inici: canvia de perfil" aria-label="Torna a l'inici per canviar de perfil"><img src="img/guineu-hola.png" alt="" width="200" height="200"></button>
       <div>
-        <p class="brand-name">Lletra Amiga</p>
+        <p class="brand-name"><span class="sr-only">Lletra Amiga</span><span class="wordmark" aria-hidden="true"><span class="wm-word"><span class="wm1">L</span><span class="wm2">l</span><span class="wm3">e</span><span class="wm4">t</span><span class="wm5">r</span><span class="wm6">a</span></span> <span class="wm-word"><span class="wm1">A</span><span class="wm2">m</span><span class="wm3">i</span><span class="wm4">g</span><span class="wm5">a</span></span></span></p>
         <p class="brand-tag">Entrenament lector i ortogràfic</p>
       </div>
     </div>
     <nav class="tabs" role="tablist" aria-label="Categories d'activitats" id="mainTabs">
-      <button class="tab-btn" role="tab" aria-selected="true" data-target="panel-reader">Lectura</button>
+      <button class="tab-btn" role="tab" aria-selected="true" data-target="panel-home">Inici</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-reader">Lectura</button>
       <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-fonologia">Fonologia</button>
       <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-exercises">Descodificació</button>
       <button class="tab-btn" role="tab" aria-selected="false" data-target="panel-dictation">Ortografia</button>
@@ -68,7 +57,8 @@
     <div class="header-actions">
       <button class="icon-btn game-hud game-only" id="gameHud" type="button"></button>
       <button class="icon-btn" id="openProfiles" aria-haspopup="dialog"><span id="currentProfileAvatar" aria-hidden="true">👤</span> <span id="currentProfileName">Perfil 1</span></button>
-      <button class="icon-btn" id="openSettings" aria-haspopup="dialog">⚙ Ajustos de lectura</button>
+      <button class="icon-btn" id="openSettings" aria-haspopup="dialog" aria-label="Ajustos de lectura">⚙ <span class="btn-label">Ajustos de lectura</span></button>
+      <button class="icon-btn" id="openHelp" aria-haspopup="dialog" aria-label="Ajuda">❓ <span class="btn-label">Ajuda</span></button>
       <button class="icon-btn" id="openAccount" aria-haspopup="dialog" hidden>☁ <span id="accountLabel">Inicia sessió</span></button>
     </div>
   </header>
@@ -79,7 +69,20 @@
   </div>
 
   <!-- ================= READER ================= -->
-  <section class="panel stack" id="panel-reader" role="tabpanel">
+  <!-- ================= INICI ================= -->
+  <section class="panel stack" id="panel-home" role="tabpanel">
+    <div class="home-hello">
+      <img class="home-mascot" src="img/guineu-hola.png" alt="" width="200" height="200">
+      <p class="speech" id="homeGreeting">Hola! Què fem avui?</p>
+    </div>
+    <div class="home-actions" id="homeActions"></div>
+    <div class="card stack">
+      <p class="section-title">Tria una secció</p>
+      <div class="home-sections" id="homeSections"></div>
+    </div>
+  </section>
+
+  <section class="panel stack" id="panel-reader" role="tabpanel" hidden>
     <div class="card stack">
       <div>
         <p class="section-title">Lectura i fluïdesa</p>
@@ -233,8 +236,8 @@
         <div id="selfEvalWidget"></div>
       </div>
       <div>
-        <p class="section-title" style="margin-bottom:2px;">Repàs espaiat i quadern d'errors</p>
-        <p class="section-hint" style="margin-bottom:10px;">Els exercicis que et costen més es tornen a proposar aquí al cap d'uns dies, perquè els repassis just a temps.</p>
+        <p class="section-title" style="margin-bottom:2px;" id="monstersTitle">👾 Monstres d'errors</p>
+        <p class="section-hint" style="margin-bottom:10px;">Els errors són monstres juganers: volen tornar a jugar amb tu al cap d'uns dies. Juga amb ells i, quan els guanyis unes quantes vegades, els atraparàs!</p>
         <div id="reviewSection"></div>
       </div>
       <div>
@@ -368,6 +371,83 @@
   <div class="report-shell" role="dialog" aria-label="Informe de treball">
     <div class="report-toolbar" id="reportToolbar"></div>
     <article class="report-doc" id="reportDoc"></article>
+  </div>
+</div>
+
+<div class="drawer-backdrop" id="helpBackdrop" hidden>
+  <div class="drawer help-drawer" role="dialog" aria-labelledby="helpTitle">
+    <div class="drawer-head">
+      <p class="section-title" id="helpTitle">Com funciona Lletra Amiga</p>
+      <button class="close-btn" id="closeHelp" aria-label="Tanca l'ajuda">✕</button>
+    </div>
+    <div class="help-hero">
+      <img src="img/guineu-hola.png" alt="" width="200" height="200">
+      <p class="speech">Hola! Soc la guineu de Lletra Amiga. T'explico com funciona.</p>
+    </div>
+    <p class="section-hint">Lletra Amiga ajuda a llegir i escriure millor amb exercicis curts. Pots anar al teu ritme: no hi ha temps límit i equivocar-se forma part d'aprendre.</p>
+
+    <details class="help-item" open>
+      <summary>👤 Començar: tria el teu perfil</summary>
+      <p>En obrir l'app, tria qui practica. Cada perfil desa el seu progrés, els seus punts i els seus ajustos de lectura. Per crear-ne un de nou, escriu el nom i prem «Afegeix perfil».</p>
+      <p>Després arribes a l'<b>Inici</b>, amb tres botons grans: el <b>repte del dia</b>, els <b>monstres d'errors</b> per repassar i <b>el teu progrés</b>. A sota hi ha totes les seccions. Des de qualsevol secció, el botó «‹ Inici» t'hi torna.</p>
+      <p>Per canviar de perfil, prem la guineu de dalt a l'esquerra o el botó del perfil.</p>
+    </details>
+
+    <details class="help-item">
+      <summary>🗂️ Les seccions</summary>
+      <ul>
+        <li><b>📖 Lectura</b>: lector adaptat amb veu, lectura guiada, lectura repetida i reptes de fluïdesa.</li>
+        <li><b>👂 Fonologia</b>: escoltar, separar i canviar els sons de les paraules.</li>
+        <li><b>🔤 Descodificació</b>: lletres que es confonen (b, d, p, q), síl·labes i rimes.</li>
+        <li><b>✏️ Ortografia</b>: dictats, patrons ortogràfics i errors per detectar.</li>
+        <li><b>💬 Vocabulari</b>: famílies de paraules, sinònims, prefixos i sufixos.</li>
+        <li><b>🧠 Comprensió</b>: idea principal, deduccions, ordenar històries i resumir.</li>
+        <li><b>🎯 Missions</b>: missions de lectura i un escape room de text.</li>
+        <li><b>📈 Progrés</b>: assoliments, nivell per àrees, repàs i informes.</li>
+      </ul>
+    </details>
+
+    <details class="help-item">
+      <summary>▶️ Fer una activitat</summary>
+      <p>Entra a una secció i tria una activitat de la llista. L'activitat ocupa tota la pantalla: per canviar-ne, prem «‹ Totes les activitats…» o el botó enrere del mòbil.</p>
+      <p>Sovint pots prémer 🔊 per escoltar la paraula o la frase. Cada activitat et diu si ho has encertat i t'explica la resposta. Els exemples no es repeteixen fins que els has vist tots.</p>
+    </details>
+
+    <details class="help-item">
+      <summary>⚙ Ajustos de lectura</summary>
+      <p>Pots triar el tipus de lletra, la mida, l'espai entre línies i entre lletres, el color de fons del text, el tema clar o fosc i la velocitat de la veu. També pots ressaltar l'inici de les paraules per guiar la lectura.</p>
+      <p>Per sentir la veu en català al mòbil, cal tenir instal·lada la veu catalana del sistema.</p>
+    </details>
+
+    <details class="help-item">
+      <summary>⭐ Punts, ratxa i insígnies</summary>
+      <ul>
+        <li><b>Punts</b>: cada exercici en suma 3 per l'esforç i 7 més si l'encertes. Equivocar-se mai no en resta.</li>
+        <li><b>Nivells</b>: amb els punts vas creixent, de 🌱 Llavor a 🌟 Constel·lació, i desbloqueges avatars nous.</li>
+        <li><b>🔥 Ratxa</b>: dies seguits practicant. Un dia perdut a la setmana no la trenca.</li>
+        <li><b>Objectiu diari</b>: el cercle de dalt mostra quants exercicis portes avui.</li>
+        <li><b>🧩 Repte del dia</b>: una activitat triada per a tu, sovint la que toca repassar.</li>
+        <li><b>Insígnies i estrelles</b>: les insígnies premien la constància; les estrelles ★★★ de cada activitat mostren com la domines.</li>
+      </ul>
+      <p>Tot això es pot amagar des dels ajustos de lectura («Punts, insígnies i reptes»).</p>
+    </details>
+
+    <details class="help-item">
+      <summary>📈 Progrés i repàs</summary>
+      <p>A la secció Progrés veus els teus assoliments, el nivell de cada àrea, l'activitat de la setmana i la precisió de cada exercici.</p>
+      <p>Quan una activitat et costa, apareix un <b>monstre d'errors</b> 👾. No passa res: només vol tornar a jugar! Prem «Juga-hi» per anar a l'activitat. Quan l'encertis unes quantes vegades, l'atraparàs.</p>
+      <p>Cada dia pots dir com t'ha anat la lectura triant una cara.</p>
+    </details>
+
+    <details class="help-item">
+      <summary>📄 Per a famílies i professionals</summary>
+      <ul>
+        <li><b>Informe de treball</b> (a Progrés): resum per perfil i període, per imprimir, desar en PDF o baixar en CSV.</li>
+        <li><b>Editor de contingut</b> (als ajustos): afegeix paraules, frases i textos propis a les activitats.</li>
+        <li><b>Compte al núvol</b> (☁, si està activat): desa els perfils i el progrés per recuperar-los des d'un altre dispositiu.</li>
+      </ul>
+      <p>Les dades es desen en aquest dispositiu. Si s'esborren les dades del navegador sense haver iniciat sessió, es perd el progrés.</p>
+    </details>
   </div>
 </div>
 

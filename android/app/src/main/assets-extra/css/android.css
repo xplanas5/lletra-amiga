@@ -1,12 +1,12 @@
 /* Adaptació a mòbil — només s'inclou a l'APK (no a la web).
    Es carrega després de css/styles.css i en sobreescriu la maquetació. */
 
-:root{ --nav-h:64px; --gutter:12px; }
+:root{ --gutter:12px; }
 
 html{ -webkit-text-size-adjust:100%; }
 body{ margin:0; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none; }
 
-.app{ max-width:none; padding:0 var(--gutter) calc(var(--nav-h) + 24px); }
+.app{ max-width:none; padding:0 var(--gutter) 32px; }
 
 /* ---------- Barra superior compacta i fixa ---------- */
 .topbar{
@@ -23,27 +23,8 @@ body{ margin:0; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:n
 .icon-btn.icon-only{ width:40px; padding:0; justify-content:center; font-size:17px; }
 #currentProfileName{ max-width:8ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-/* ---------- Navegació inferior ---------- */
-.tabs.bottom-nav{
-  position:fixed; left:0; right:0; bottom:0; z-index:45; height:var(--nav-h);
-  border-radius:0; padding:6px; gap:2px; flex-wrap:nowrap; overflow-x:auto;
-  background:var(--surface); border-top:1px solid var(--border);
-  box-shadow:0 -4px 16px rgba(0,0,0,.06);
-  scrollbar-width:none; scroll-behavior:smooth;
-}
-.tabs.bottom-nav::-webkit-scrollbar{ display:none; }
-.bottom-nav .tab-btn{
-  flex:1 0 76px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-  padding:4px 6px; border-radius:14px; font-size:11px; line-height:1.1;
-}
-.bottom-nav .tab-icon{ font-size:20px; line-height:1; }
-.bottom-nav .tab-btn[aria-selected="true"]{ background:var(--accent-soft); color:var(--accent-strong); }
-html.kb-open .bottom-nav{ display:none; }
-html.kb-open .app{ padding-bottom:24px; }
-
 /* En pantalles tàctils, l'estat :hover queda "enganxat" després de tocar. */
 @media (hover:none){
-  .tab-btn:hover:not([aria-selected="true"]){ background:transparent; color:var(--ink-secondary); }
   .icon-btn:hover, .ghost-btn:hover, .choice-btn:hover:not(:disabled), .letter-cell:hover:not(:disabled),
   .activity-card:hover:not(:disabled){ border-color:var(--border); }
   .play-btn:hover{ background:var(--accent); }
@@ -124,13 +105,15 @@ textarea.field{ min-height:110px; }
 .content-group .reader-toolbar > *{ flex:1 1 100%; justify-content:center; }
 
 /* ---------- Activitat oberta (lògica compartida a js/app.js) ---------- */
-html.in-activity .app{ padding-bottom:24px; }
+
 
 /* ---------- Gamificació: indicador compacte a la capçalera ---------- */
 .game-hud{ height:40px; padding:0 10px; gap:6px; font-size:13.5px; }
 .game-hud .hud-part:nth-child(2){ display:none; }
 #openProfiles #currentProfileName{ display:none; }
 #openProfiles{ width:40px; padding:0; justify-content:center; font-size:19px; }
-.game-toast{ bottom:calc(var(--nav-h) + 16px); }
-html.in-activity .game-toast, html.kb-open .game-toast{ bottom:24px; }
 .badge-grid{ grid-template-columns:1fr 1fr; }
+
+/* ---------- Tema pastel ---------- */
+.brand-name{ font-size:20px; }
+.game-toast{ max-width:calc(100vw - 24px); }

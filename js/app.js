@@ -108,6 +108,7 @@
     applySettings();
     renderProgress();
     if (Game) Game.render();
+    if (!document.getElementById("panel-home").hidden) renderHome();
   }
 
   function renderProfileUI(){
@@ -368,6 +369,7 @@
   }
 
   wireTabs(document.getElementById("mainTabs"), {
+    "panel-home": document.getElementById("panel-home"),
     "panel-reader": document.getElementById("panel-reader"),
     "panel-fonologia": document.getElementById("panel-fonologia"),
     "panel-exercises": document.getElementById("panel-exercises"),
@@ -376,7 +378,10 @@
     "panel-comprensio": document.getElementById("panel-comprensio"),
     "panel-missions": document.getElementById("panel-missions"),
     "panel-progress": document.getElementById("panel-progress")
-  }, function(btn){ if (btn.dataset.target === "panel-progress") renderProgress(); });
+  }, function(btn){
+    if (btn.dataset.target === "panel-progress") renderProgress();
+    if (btn.dataset.target === "panel-home") renderHome();
+  });
 
   /* ---------------- Settings drawer ---------------- */
   var drawer = document.getElementById("drawerBackdrop");
@@ -2635,7 +2640,18 @@
     });
   }
 
-  /* ---- Repàs espaiat i quadern d'errors ---- */
+  /* ---- Repàs espaiat i quadern d'errors: els errors són monstres que volen tornar a jugar ---- */
+  var MONSTERS = ["👾", "👻", "🐙", "🦕", "🐲", "🐛", "🦑", "🤖"];
+  function monsterFor(type){
+    var h = 0;
+    for (var i = 0; i < type.length; i++) h = (h * 31 + type.charCodeAt(i)) | 0;
+    return MONSTERS[Math.abs(h) % MONSTERS.length];
+  }
+  function shortDate(iso){ var p = iso.split("-"); return +p[2] + "/" + +p[1]; }
+  function monstersDue(){
+    var today = todayStr();
+    return Object.keys(progress.review).filter(function(k){ return progress.review[k].due <= today; });
+  }
   function renderReviewSection(){
     var today = todayStr();
     var entries = Object.keys(progress.review).map(function(k){
@@ -2645,20 +2661,21 @@
     entries.sort(function(a, b){ return a.due < b.due ? -1 : (a.due > b.due ? 1 : 0); });
     var container = document.getElementById("reviewSection");
     if (!entries.length){
-      container.innerHTML = '<p class="review-empty">Encara no tens cap exercici pendent de repàs. Quan et costi alguna activitat, apareixerà aquí per practicar-la de nou en el moment just.</p>';
+      container.innerHTML = '<div class="review-empty"><span class="monster" aria-hidden="true">🌈</span><p>Cap monstre a la vista! Quan una activitat et costi, apareixerà aquí un monstre que voldrà tornar a jugar amb tu.</p></div>';
       return;
     }
     container.innerHTML = '<div class="review-list">' + entries.map(function(e){
       var isDue = e.due <= today;
-      return '<div class="review-item" data-type="' + e.type + '">' +
+      return '<div class="review-item' + (isDue ? " due" : "") + '" data-type="' + e.type + '">' +
+        '<span class="monster" aria-hidden="true">' + monsterFor(e.type) + '</span>' +
         '<span class="name">' + e.label + '</span>' +
-        '<span class="due-badge ' + (isDue ? "today" : "upcoming") + '">' + (isDue ? "Toca repassar" : "Repàs " + e.due) + '</span>' +
+        '<span class="due-badge ' + (isDue ? "today" : "upcoming") + '">' + (isDue ? "Vol jugar ara!" : "Tornarà el " + shortDate(e.due)) + '</span>' +
         '<div class="sema-row">' +
         '<button type="button" class="sema-btn" data-rate="facil">🙂 Fàcil</button>' +
         '<button type="button" class="sema-btn" data-rate="dificil">😐 Difícil</button>' +
         '<button type="button" class="sema-btn" data-rate="molt-dificil">😖 Molt difícil</button>' +
         '</div>' +
-        '<button type="button" class="ghost-btn practice-btn">Practica ara</button>' +
+        '<button type="button" class="play-btn practice-btn">Juga-hi</button>' +
         '</div>';
     }).join("") + '</div>';
 
@@ -2780,11 +2797,31 @@
     btn.addEventListener("click", closeActivities);
   });
 
-  /* ---------------- Portada ---------------- */
-  var COVER_KEY = "lletraAmiga-portada.amaga";
+  /* ---------------- Portada ----------------
+     En obrir l'app es tria el perfil; la guineu de la capçalera hi torna per canviar-lo. */
   var cover = document.getElementById("cover");
+  function renderCoverProfiles(){
+    var list = document.getElementById("coverProfiles");
+    list.innerHTML = "";
+    profiles.forEach(function(p){
+      var avatar = Game && settings.game !== false && Game.avatarFor(p.id === activeProfileId ? progress : loadJSON(progressKeyFor(p.id), {}));
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cover-profile";
+      btn.setAttribute("data-active", p.id === activeProfileId ? "true" : "false");
+      btn.innerHTML = '<span class="cover-avatar" aria-hidden="true"></span><span class="name"></span>';
+      btn.querySelector(".cover-avatar").textContent = avatar || "👤";
+      btn.querySelector(".name").textContent = p.name;
+      btn.addEventListener("click", function(){
+        if (p.id !== activeProfileId){ switchProfile(p.id); renderProfileUI(); }
+        hideCover();
+        goHome();
+      });
+      list.appendChild(btn);
+    });
+  }
   function showCover(){
-    try{ document.getElementById("coverSkip").checked = localStorage.getItem(COVER_KEY) === "1"; }catch(e){}
+    renderCoverProfiles();
     cover.hidden = false; cover.scrollTop = 0;
     document.body.classList.add("cover-open");
   }
@@ -2793,22 +2830,98 @@
     document.body.classList.remove("cover-open");
     window.scrollTo(0, 0);
   }
-  cover.querySelectorAll(".cover-card").forEach(function(card){
-    card.addEventListener("click", function(){
-      var tab = document.querySelector('#mainTabs [data-target="' + card.dataset.go + '"]');
-      hideCover();
-      if (tab) tab.click();
-    });
-  });
-  document.getElementById("coverStart").addEventListener("click", hideCover);
+  function addProfileFromCover(){
+    var input = document.getElementById("coverNewName");
+    var name = input.value.trim();
+    if (!name){ input.focus(); return; }
+    var id = uid();
+    profiles.push({ id: id, name: name });
+    saveProfilesList();
+    input.value = "";
+    switchProfile(id);
+    renderProfileUI();
+    hideCover();
+    goHome();
+  }
+  document.getElementById("coverAddProfile").addEventListener("click", addProfileFromCover);
+  document.getElementById("coverNewName").addEventListener("keydown", function(e){ if (e.key === "Enter") addProfileFromCover(); });
   document.getElementById("openCover").addEventListener("click", showCover);
-  document.getElementById("coverSkip").addEventListener("change", function(e){
-    try{ if (e.target.checked) localStorage.setItem(COVER_KEY, "1"); else localStorage.removeItem(COVER_KEY); }catch(err){}
-  });
   document.addEventListener("keydown", function(e){ if (e.key === "Escape" && !cover.hidden) hideCover(); });
-  var skipCover = false;
-  try{ skipCover = localStorage.getItem(COVER_KEY) === "1"; }catch(e){}
-  if (!skipCover) showCover();
+
+  /* ---------------- Inici ----------------
+     Tres accions immediates (repte, monstres, progrés) i les seccions en targetes. Les pestanyes
+     queden amagades: es navega des d'aquí i cada secció té el botó «‹ Inici». */
+  var SECTIONS = [
+    { tab:"panel-reader", icon:"📖", name:"Lectura", desc:"Llegeix amb veu i ressaltat." },
+    { tab:"panel-fonologia", icon:"👂", name:"Fonologia", desc:"Juga amb els sons." },
+    { tab:"panel-exercises", icon:"🔤", name:"Descodificació", desc:"Lletres, síl·labes i rimes." },
+    { tab:"panel-dictation", icon:"✏️", name:"Ortografia", desc:"Dictats i patrons." },
+    { tab:"panel-vocabulari", icon:"💬", name:"Vocabulari", desc:"Paraules noves i famílies." },
+    { tab:"panel-comprensio", icon:"🧠", name:"Comprensió", desc:"Entén i resumeix textos." },
+    { tab:"panel-missions", icon:"🎯", name:"Missions", desc:"Reptes i escape room." },
+    { tab:"panel-progress", icon:"📈", name:"Progrés", desc:"Assoliments i informes." }
+  ];
+  function goTab(target){
+    var tab = document.querySelector('#mainTabs [data-target="' + target + '"]');
+    if (tab) tab.click();
+    window.scrollTo(0, 0);
+  }
+  function goHome(){ closeActivities(); goTab("panel-home"); }
+  function renderHome(){
+    var p = profiles.find(function(x){ return x.id === activeProfileId; });
+    document.getElementById("homeGreeting").textContent = "Hola" + (p ? ", " + p.name : "") + "! Què fem avui?";
+    var ch = Game && Game.challengeInfo();
+    var due = monstersDue().length, total = Object.keys(progress.review).length;
+    var actions = document.getElementById("homeActions");
+    actions.innerHTML =
+      '<button type="button" class="home-action go" data-act="challenge"><span class="ha-icon" aria-hidden="true">' + (ch && ch.done ? "✅" : "🧩") + '</span>' +
+        '<span class="ha-text"><b>' + (ch && ch.done ? "Repte superat!" : "Repte del dia") + '</b><span></span></span></button>' +
+      '<button type="button" class="home-action monsters" data-act="monsters"><span class="ha-icon" aria-hidden="true">👾</span>' +
+        '<span class="ha-text"><b>Monstres d\'errors</b><span>' + (due ? due + (due === 1 ? " vol" : " volen") + " jugar ara!" : total ? "Ara descansen" : "Cap monstre a la vista") + '</span></span>' +
+        (due ? '<span class="ha-count">' + due + '</span>' : "") + '</button>' +
+      '<button type="button" class="home-action progress" data-act="progress"><span class="ha-icon" aria-hidden="true">📈</span>' +
+        '<span class="ha-text"><b>El meu progrés</b><span>Assoliments i insígnies</span></span></button>';
+    actions.querySelector('[data-act="challenge"] .ha-text span').textContent = ch ? ch.label + " · " + ch.n + "/" + ch.target : "";
+    actions.querySelector('[data-act="challenge"]').addEventListener("click", function(){ if (ch) goToActivityTab(ch.type); });
+    actions.querySelector('[data-act="monsters"]').addEventListener("click", function(){
+      var list = monstersDue();
+      if (list.length) goToActivityTab(list[0]);
+      else { goTab("panel-progress"); document.getElementById("monstersTitle").scrollIntoView({ block:"start" }); }
+    });
+    actions.querySelector('[data-act="progress"]').addEventListener("click", function(){ goTab("panel-progress"); });
+
+    var grid = document.getElementById("homeSections");
+    grid.innerHTML = "";
+    SECTIONS.forEach(function(sec){
+      var types = Object.keys(TYPE_INFO).filter(function(k){ return TYPE_INFO[k].tab === sec.tab; });
+      var tried = types.filter(function(k){ return progress.stats[k] && progress.stats[k].a; }).length;
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "home-section";
+      btn.dataset.target = sec.tab;
+      btn.innerHTML = '<span class="hs-icon" aria-hidden="true">' + sec.icon + '</span><span class="name">' + sec.name + '</span>' +
+        '<span class="desc">' + sec.desc + '</span>' +
+        (types.length ? '<span class="hs-meter game-only">' + tried + " de " + types.length + " provades</span>" : "");
+      btn.addEventListener("click", function(){ goTab(sec.tab); });
+      grid.appendChild(btn);
+    });
+  }
+  // Botó «‹ Inici» a dalt de cada secció
+  document.querySelectorAll('.panel[role="tabpanel"]').forEach(function(panel){
+    if (panel.id === "panel-home") return;
+    var back = document.createElement("button");
+    back.type = "button";
+    back.className = "home-back";
+    back.textContent = "‹ Inici";
+    back.addEventListener("click", goHome);
+    panel.insertBefore(back, panel.firstChild);
+  });
+
+  /* ---------------- Ajuda ---------------- */
+  var helpBackdrop = document.getElementById("helpBackdrop");
+  document.getElementById("openHelp").addEventListener("click", function(){ helpBackdrop.hidden = false; });
+  document.getElementById("closeHelp").addEventListener("click", function(){ helpBackdrop.hidden = true; });
+  helpBackdrop.addEventListener("click", function(e){ if (e.target === helpBackdrop) helpBackdrop.hidden = true; });
 
   /* ---------------- Gamificació (js/game.js) ---------------- */
   if (Game){
@@ -2833,6 +2946,8 @@
 
   /* ---------------- Init ---------------- */
   renderProfileUI();
+  renderHome();
+  showCover();
   applySettings();
   renderReadingText(currentText);
   if (hasTTS && window.speechSynthesis.onvoiceschanged !== undefined) window.speechSynthesis.onvoiceschanged = function(){};

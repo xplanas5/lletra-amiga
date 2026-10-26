@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html editor.html _site/
-          cp -r css js _site/
+          cp -r css js img _site/
           # Paquet de contingut compartit (opcional): el reben automàticament tots els dispositius.
           [ -f contingut.json ] && cp contingut.json _site/ || true
           rm -f _site/js/config.local.js

@@ -173,7 +173,8 @@
     var item = queue.shift(), el = toastEl();
     if (!item){ showing = false; el.classList.remove("on"); return; }
     showing = true;
-    el.textContent = item.msg;
+    el.innerHTML = '<img src="img/' + (item.big ? "guineu-estrella" : "guineu-hola") + '.png" alt="" width="200" height="200"><span></span>';
+    el.querySelector("span").textContent = item.msg;
     el.classList.add("on");
     if (item.big){ confetti(); chime(); }
     setTimeout(function(){ el.classList.remove("on"); setTimeout(nextToast, 250); }, 2600);
@@ -226,6 +227,7 @@
   var lastRecoveryToast = 0;
   function onActivity(type, ok){
     var g = game(), before = levelFor(g.xp), gained = XP_INTENT + (ok ? XP_ENCERT : 0);
+    if (ok && enabled()){ ding(); burst(); }
     if (ok){
       g.combo += 1;
       if (g.combo > g.bestCombo) g.bestCombo = g.combo;
@@ -259,7 +261,46 @@
     bump(gained);
     render();
   }
-  function onReviewCleared(){ game().reviewsCleared += 1; }
+  function onReviewCleared(){
+    game().reviewsCleared += 1;
+    celebrate("🎉 Has atrapat un monstre d'errors! Ja no tornarà.", true);
+  }
+
+  /* ---------------- «Juice»: campaneta i esclat petit a cada encert ---------------- */
+  function ding(){
+    if (settings().gameSound === false) return;
+    if (window.speechSynthesis && window.speechSynthesis.speaking) return;
+    try{
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      audioCtx = audioCtx || new Ctx();
+      [1318.5, 1760].forEach(function(f, i){
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime + i * 0.07;
+        o.frequency.value = f; o.type = "triangle";
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.09, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + 0.5);
+      });
+    }catch(e){}
+  }
+  function burst(){
+    if (reducedMotion()) return;
+    var box = document.createElement("div");
+    box.className = "game-burst"; box.setAttribute("aria-hidden", "true");
+    var colors = ["#F4C842", "#5FCB8B", "#6CB8F0", "#E8709A", "#8E73E3", "#F59152"];
+    for (var i = 0; i < 14; i++){
+      var b = document.createElement("i"), a = (Math.PI * 2 * i) / 14, d = 60 + Math.random() * 60;
+      b.style.background = colors[i % colors.length];
+      b.style.setProperty("--dx", Math.round(Math.cos(a) * d) + "px");
+      b.style.setProperty("--dy", Math.round(Math.sin(a) * d) + "px");
+      box.appendChild(b);
+    }
+    var star = document.createElement("span"); star.className = "burst-star"; star.textContent = "⭐";
+    box.appendChild(star);
+    document.body.appendChild(box);
+    setTimeout(function(){ box.remove(); }, 900);
+  }
 
   /* ---------------- Vistes ---------------- */
   function stars(type){
@@ -334,11 +375,6 @@
     var av = document.getElementById("currentProfileAvatar");
     if (av) av.textContent = enabled() ? s.g.avatar : "👤";
   }
-  function renderCover(s){
-    var box = document.getElementById("coverGame");
-    if (!box) return;
-    box.innerHTML = '<p class="game-hello">Hola, ' + esc(api.profileName()) + "!</p>" + statusHtml(s) + challengeHtml(s);
-  }
   function renderCard(s){
     var box = document.getElementById("gameCard");
     if (!box) return;
@@ -370,7 +406,7 @@
     if (!api) return;
     document.documentElement.classList.toggle("game-off", !enabled());
     var s = summary();
-    renderHud(s); renderCover(s); renderCard(s); renderCards(); syncControls();
+    renderHud(s); renderCard(s); renderCards(); syncControls();
   }
 
   /* ---------------- Ajustos ---------------- */
@@ -411,6 +447,11 @@
     check: function(){ if (api && checkBadges(false)) api.save(); render(); },
     render: render,
     streak: function(){ return streakInfo().days; },
+    challengeInfo: function(){
+      var ch = challenge(), target = challengeTarget(ch.type);
+      return { type:ch.type, label:(api.typeInfo[ch.type] || {}).label || ch.type, done:ch.done,
+        n:Math.min(target, todayCount(ch.type)), target:target };
+    },
     avatarFor: function(p){ return p && p.game && p.game.avatar; }
   };
 })();

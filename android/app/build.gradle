@@ -56,7 +56,7 @@ tasks.register('copyWebAssets', Copy) {
     }
     from(webRoot) {
         // L'editor de contingut i, si n'hi ha, el paquet de contingut publicat (contingut.json).
-        include 'css/**', 'js/**', 'editor.html', 'contingut.json'
+        include 'css/**', 'js/**', 'img/**', 'editor.html', 'contingut.json'
         exclude 'js/config.local.js'
     }
     from('src/main/assets-extra')

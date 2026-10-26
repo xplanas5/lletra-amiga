@@ -36,13 +36,23 @@ Per provar el núvol en local, crea `js/config.local.js` (està a `.gitignore`, 
 window.LLETRA_CONFIG = { supabaseUrl: "https://XXXX.supabase.co", supabaseAnonKey: "eyJ...", googleLogin: false };
 ```
 
-## Portada
+## Portada i ajuda
 
-En obrir l'app (web i APK) es mostra una portada amb les seccions i les eines. Cada targeta porta directament a la seva secció. Es pot desactivar amb «No mostris la portada en obrir l'app» i tornar-hi des del logotip «Ll» de la capçalera.
+En obrir l'app (web i APK) es mostra una portada només amb el títol, el subtítol i la tria de perfil («Qui practica avui?»), on també es pot crear un perfil nou. La guineu de la capçalera hi torna per canviar de perfil.
+
+El botó **❓ Ajuda** de la capçalera obre una guia breu de com funciona l'app: perfils, seccions, activitats, ajustos de lectura, punts i insígnies, progrés i repàs, i eines per a famílies i professionals.
 
 ## Navegació
 
-Cada categoria mostra d'entrada la llista de totes les seves activitats (a Lectura, el lector adaptat n'és la primera). Una activitat oberta ocupa la pantalla: s'amaguen les pestanyes i, per canviar d'activitat o de categoria, cal tornar enrere amb el botó «‹ Totes les activitats…» (o el botó enrere d'Android). Funciona igual a la web i a l'APK (`js/app.js`).
+Per reduir la càrrega cognitiva, la navegació parteix de la pantalla d'**Inici**: tres botons d'acció immediata (*Repte del dia*, *Monstres d'errors* i *El meu progrés*) i les vuit seccions en targetes de colors. Les pestanyes (`#mainTabs`) continuen al codi però no es mostren; cada secció té el botó «‹ Inici» per tornar-hi.
+
+Cada secció mostra d'entrada la llista de les seves activitats (a Lectura, el lector adaptat n'és la primera). Una activitat oberta ocupa la pantalla i, per canviar-ne, es torna enrere amb «‹ Totes les activitats…» o amb el botó enrere d'Android (activitat → secció → Inici). Funciona igual a la web i a l'APK (`js/app.js`).
+
+## Estil visual
+
+Estil pastel i juganer per a infants i joves: cada secció té el seu color, els botons tenen relleu, els títols fan servir *Fredoka* i el logotip té les lletres de colors. La mascota és una guineu (`img/guineu-hola.png`, `img/guineu-estrella.png`, generades amb Canva i amb fons transparent), que surt a la portada, a l'Inici, a l'ajuda i a les celebracions. El text de lectura continua amb Lexend o Atkinson Hyperlegible sobre fons llis. Hi ha tema clar i fosc.
+
+Els errors del repàs espaiat es presenten com a **monstres d'errors** que «volen tornar a jugar», sense to de penalització. Quan se n'atrapa un, es celebra. Per fer l'eina més engrescadora («juice»), cada encert fa sonar una campaneta i un esclat petit d'estrelles, i les pantalles entren amb transicions suaus. Tot respecta «reduir moviment» i el so es pot treure als ajustos.
 
 ## Contingut: exemples i bancs
 
@@ -69,7 +79,7 @@ Ordre d'aplicació: `contingut.json` publicat → adreça web → paquet del dis
 - **Avatars**: 12 d'inicials i 6 que es desbloquegen pujant de nivell.
 - **Estrelles** (★★★) a cada targeta d'activitat segons el domini, i «✨ Nova» a les no provades.
 
-Es veu a la capçalera (nivell, ratxa i objectiu; obre els assoliments), a la portada i a la targeta *Els teus assoliments* de *Progrés*. Les celebracions respecten «reduir moviment» i el so no sona mentre parla la veu. Als *Ajustos de lectura* es pot amagar tot (les dades es continuen desant) i treure el so. L'estat es desa a `progress.game` de cada perfil, de manera que es sincronitza amb el núvol; els perfils anteriors reben d'entrada els punts i les insígnies que corresponen a l'activitat que ja havien fet.
+Es veu a la capçalera (nivell, ratxa i objectiu; obre els assoliments) i a la targeta *Els teus assoliments* de *Progrés*. Les celebracions respecten «reduir moviment» i el so no sona mentre parla la veu. Als *Ajustos de lectura* es pot amagar tot (les dades es continuen desant) i treure el so. L'estat es desa a `progress.game` de cada perfil, de manera que es sincronitza amb el núvol; els perfils anteriors reben d'entrada els punts i les insígnies que corresponen a l'activitat que ja havien fet.
 
 ## Informes de treball
 
